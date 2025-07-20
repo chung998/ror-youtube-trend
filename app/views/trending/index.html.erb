@@ -1,0 +1,199 @@
+<% content_for :title, "YouTube 트렌드 - #{@region || 'KR'}" %>
+
+<div class="container">
+  <!-- 헤더 섹션 -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="display-6">
+          <i class="fab fa-youtube text-danger"></i>
+          YouTube 트렌드
+          <span class="badge bg-primary"><%= @region || 'KR' %></span>
+        </h1>
+        
+        <div class="text-muted small text-end">
+          <% if @last_updated %>
+            <div><i class="fas fa-clock"></i> 마지막 업데이트: <%= time_ago_in_words(@last_updated) %> 전</div>
+          <% end %>
+          <% if @next_collection %>
+            <div><i class="fas fa-calendar-alt"></i> 다음 수집: <%= @next_collection.strftime("%m/%d %H:%M") %></div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 필터 및 검색 섹션 -->
+  <div class="row mb-4">
+    <div class="col-md-3">
+      <%= form_with url: trending_path, method: :get, local: true, class: "mb-2" do |f| %>
+        <label class="form-label">지역 선택</label>
+        <%= f.select :region, 
+                     options_for_select([
+                       ['🇰🇷 한국', 'KR'],
+                       ['🇺🇸 미국', 'US'], 
+                       ['🇯🇵 일본', 'JP'],
+                       ['🇬🇧 영국', 'GB'],
+                       ['🇩🇪 독일', 'DE'],
+                       ['🇫🇷 프랑스', 'FR']
+                     ], @region),
+                     {}, 
+                     { class: "form-select", onchange: "this.form.submit();" } %>
+        <%= f.hidden_field :type, value: @type %>
+      <% end %>
+    </div>
+    
+    <div class="col-md-3">
+      <%= form_with url: trending_path, method: :get, local: true, class: "mb-2" do |f| %>
+        <label class="form-label">타입 선택</label>
+        <%= f.select :type,
+                     options_for_select([
+                       ['전체', 'all'],
+                       ['일반 영상', 'videos'],
+                       ['쇼츠', 'shorts']
+                     ], @type),
+                     {},
+                     { class: "form-select", onchange: "this.form.submit();" } %>
+        <%= f.hidden_field :region, value: @region %>
+      <% end %>
+    </div>
+    
+    <div class="col-md-6">
+      <%= form_with url: search_path, method: :get, local: true, class: "mb-2" do |f| %>
+        <label class="form-label">검색</label>
+        <div class="input-group">
+          <%= f.text_field :q, placeholder: "영상 제목이나 채널명으로 검색...", 
+                           class: "form-control",
+                           value: params[:q] %>
+          <%= f.submit "검색", class: "btn btn-outline-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- 비디오 그리드 -->
+  <% if @videos && @videos.any? %>
+    <div class="row" id="videos-grid">
+      <% @videos.each do |video| %>
+        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+          <div class="card video-card h-100 shadow-sm">
+            <!-- 썸네일 -->
+            <div class="position-relative">
+              <img src="<%= video.thumbnail_url %>" 
+                   class="card-img-top video-thumbnail" 
+                   alt="<%= video.title %>"
+                   loading="lazy">
+              
+              <!-- 쇼츠 배지 -->
+              <% if video.is_shorts %>
+                <span class="shorts-badge">
+                  <i class="fas fa-play"></i> Shorts
+                </span>
+              <% end %>
+              
+              <!-- 재생 시간 -->
+              <% if video.duration %>
+                <span class="position-absolute bottom-0 end-0 m-2">
+                  <small class="badge bg-dark bg-opacity-75">
+                    <%= video.duration.gsub(/PT|H|M|S/, '').gsub(/(\d+)/, '\1:') %>
+                  </small>
+                </span>
+              <% end %>
+            </div>
+            
+            <div class="card-body d-flex flex-column">
+              <!-- 제목 -->
+              <h6 class="card-title" title="<%= video.title %>">
+                <%= truncate(video.title, length: 80) %>
+              </h6>
+              
+              <!-- 채널명 -->
+              <p class="text-muted small mb-2">
+                <i class="fas fa-user-circle"></i>
+                <%= video.channel_title %>
+              </p>
+              
+              <!-- 통계 정보 -->
+              <div class="row text-center small text-muted mb-3">
+                <div class="col-4">
+                  <i class="fas fa-eye text-primary"></i><br>
+                  <strong><%= video.formatted_view_count %></strong><br>
+                  <small>조회수</small>
+                </div>
+                <div class="col-4">
+                  <i class="fas fa-thumbs-up text-success"></i><br>
+                  <strong><%= number_with_delimiter(video.like_count) %></strong><br>
+                  <small>좋아요</small>
+                </div>
+                <div class="col-4">
+                  <i class="fas fa-comment text-info"></i><br>
+                  <strong><%= number_with_delimiter(video.comment_count) %></strong><br>
+                  <small>댓글</small>
+                </div>
+              </div>
+              
+              <!-- 업로드 시간 -->
+              <div class="text-muted small mb-3">
+                <i class="fas fa-calendar"></i>
+                <%= time_ago_in_words(video.published_at) %> 전 업로드
+              </div>
+              
+              <!-- YouTube 링크 버튼 -->
+              <div class="mt-auto">
+                <a href="<%= video.youtube_url %>" 
+                   target="_blank" 
+                   class="btn btn-danger w-100">
+                  <i class="fab fa-youtube"></i>
+                  YouTube에서 보기
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <!-- 데이터 없음 -->
+    <div class="text-center py-5">
+      <div class="mb-4">
+        <i class="fas fa-video fa-5x text-muted"></i>
+      </div>
+      <h3 class="text-muted">데이터가 없습니다</h3>
+      <p class="text-muted mb-4">
+        <% if params[:q].present? %>
+          "<%= params[:q] %>"에 대한 검색 결과가 없습니다.
+        <% else %>
+          <%= @region || 'KR' %> 지역의 
+          <%= @type == 'all' ? '전체' : (@type == 'shorts' ? '쇼츠' : '일반 영상') %> 
+          트렌드 데이터가 아직 수집되지 않았습니다.
+        <% end %>
+      </p>
+      
+      <!-- 수동 수집 버튼 (임시로 모든 사용자에게 표시) -->
+      <div>
+        <%= button_to "지금 수집하기", collect_now_path, 
+                      params: { region: @region || 'KR', type: @type || 'all' },
+                      method: :post,
+                      class: "btn btn-primary btn-lg",
+                      data: { confirm: "#{@region || 'KR'} 지역의 YouTube 트렌드 데이터를 수집하시겠습니까?" } %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<!-- 로딩 스피너 -->
+<div id="loading-spinner" class="text-center py-5 d-none">
+  <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+    <span class="visually-hidden">로딩 중...</span>
+  </div>
+  <p class="mt-3 text-muted">데이터를 불러오는 중...</p>
+</div>
+
+<script>
+  // 폼 제출시 로딩 스피너 표시
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function() {
+      document.getElementById('loading-spinner').classList.remove('d-none');
+    });
+  });
+</script>
