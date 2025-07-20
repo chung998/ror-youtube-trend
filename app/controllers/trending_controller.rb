@@ -1,10 +1,10 @@
 class TrendingController < ApplicationController
-  before_action :set_region_and_type, only: [:index, :collect_now]
+  before_action :set_region_and_type, only: [:index, :collect_country]
+  before_action :set_region, only: [:collect_country]
   
   def index
     @videos = TrendingVideo.cached_trending(@region, @type)
-    @last_updated = get_last_updated_time
-    @next_collection = CollectionLog.next_scheduled_time
+    @collection_status = TrendingCollectionService.new.collection_status
     
     respond_to do |format|
       format.html
@@ -27,16 +27,42 @@ class TrendingController < ApplicationController
     render :index
   end
   
-  def collect_now
-    # 수동 수집 트리거 (관리자 전용)
-    return head :forbidden unless user_signed_in? && current_user.admin?
+  # 특정 국가 수집 (일반 + 쇼츠 통합)
+  def collect_country
+    # 수동 수집 트리거 (현재는 임시로 인증 비활성화)
+    # return head :forbidden unless user_signed_in? && current_user.admin?
     
-    # TODO: CollectTrendingDataJob이 구현되면 활성화
-    # CollectTrendingDataJob.perform_later(@region, @type)
+    service = TrendingCollectionService.new
+    result = service.collect_country(@region)
     
     respond_to do |format|
-      format.html { redirect_back(fallback_location: root_path, notice: '데이터 수집을 시작했습니다.') }
-      format.json { render json: { status: 'started', region: @region } }
+      if result[:success]
+        format.html { redirect_back(fallback_location: root_path, notice: result[:message]) }
+        format.json { render json: result }
+      else
+        status_code = result[:already_collected] ? :unprocessable_entity : :internal_server_error
+        format.html { redirect_back(fallback_location: root_path, alert: result[:error]) }
+        format.json { render json: result, status: status_code }
+      end
+    end
+  end
+  
+  # 전체 국가 수집
+  def collect_all_countries
+    # 수동 수집 트리거 (현재는 임시로 인증 비활성화)
+    # return head :forbidden unless user_signed_in? && current_user.admin?
+    
+    service = TrendingCollectionService.new
+    result = service.collect_all_countries
+    
+    respond_to do |format|
+      if result[:success]
+        format.html { redirect_back(fallback_location: root_path, notice: result[:message]) }
+        format.json { render json: result }
+      else
+        format.html { redirect_back(fallback_location: root_path, alert: "전체 수집 실패: #{result[:results].select { |r| !r[:success] }.map { |r| r[:error] }.join(', ')}") }
+        format.json { render json: result, status: :internal_server_error }
+      end
     end
   end
   
@@ -47,13 +73,22 @@ class TrendingController < ApplicationController
     @type = params[:type] || 'all'
     
     # 유효하지 않은 지역 코드 처리
-    unless %w[KR US JP GB DE FR].include?(@region)
+    unless %w[KR US JP GB DE FR VN ID].include?(@region)
       @region = 'KR'
     end
     
     # 유효하지 않은 타입 처리
     unless %w[all videos shorts].include?(@type)
       @type = 'all'
+    end
+  end
+  
+  def set_region
+    @region = params[:region]&.upcase || 'KR'
+    
+    # 유효하지 않은 지역 코드 처리
+    unless %w[KR US JP GB DE FR VN ID].include?(@region)
+      @region = 'KR'
     end
   end
   

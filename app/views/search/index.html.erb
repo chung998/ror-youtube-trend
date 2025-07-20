@@ -1,0 +1,321 @@
+<% content_for :title, "YouTube 동영상 검색" %>
+
+<div class="container-fluid">
+  <!-- 검색 헤더 -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1 class="display-6">
+        <i class="fab fa-youtube text-danger"></i>
+        YouTube 동영상 검색
+      </h1>
+      <p class="text-muted">키워드, 지역, 길이, 발행 날짜 등 다양한 필터로 검색할 수 있습니다</p>
+    </div>
+  </div>
+
+  <!-- 검색 필터 -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-search"></i>
+            검색 필터
+          </h5>
+        </div>
+        <div class="card-body">
+          <%= form_with url: search_results_path, method: :get, local: true, class: "row g-3" do |f| %>
+            <!-- 검색 키워드 -->
+            <div class="col-md-6">
+              <label for="search_query" class="form-label">검색 키워드</label>
+              <%= f.text_field :q, value: @query, 
+                              class: "form-control", 
+                              id: "search_query",
+                              placeholder: "예: 케이팝, 요리, 게임 등" %>
+            </div>
+
+            <!-- 지역 선택 -->
+            <div class="col-md-3">
+              <label for="search_region" class="form-label">지역</label>
+              <%= f.select :region, 
+                          options_for_select(YoutubeSearchService.region_options, @region),
+                          {}, 
+                          { class: "form-select", id: "search_region" } %>
+            </div>
+
+            <!-- 동영상 길이 -->
+            <div class="col-md-3">
+              <label for="search_duration" class="form-label">동영상 길이</label>
+              <%= f.select :duration, 
+                          options_for_select(YoutubeSearchService.duration_options, @duration),
+                          {}, 
+                          { class: "form-select", id: "search_duration" } %>
+            </div>
+
+            <!-- 정렬 순서 -->
+            <div class="col-md-3">
+              <label for="search_order" class="form-label">정렬 순서</label>
+              <%= f.select :order, 
+                          options_for_select(YoutubeSearchService.order_options, @order),
+                          {}, 
+                          { class: "form-select", id: "search_order" } %>
+            </div>
+
+            <!-- 발행 날짜 시작 -->
+            <div class="col-md-3">
+              <label for="search_published_after" class="form-label">발행 날짜 (시작)</label>
+              <%= f.date_field :published_after, 
+                              value: params[:published_after],
+                              class: "form-control", 
+                              id: "search_published_after" %>
+            </div>
+
+            <!-- 발행 날짜 끝 -->
+            <div class="col-md-3">
+              <label for="search_published_before" class="form-label">발행 날짜 (끝)</label>
+              <%= f.date_field :published_before, 
+                              value: params[:published_before],
+                              class: "form-control", 
+                              id: "search_published_before" %>
+            </div>
+
+            <!-- 검색 버튼 -->
+            <div class="col-md-3 d-flex align-items-end">
+              <%= f.submit "검색", class: "btn btn-primary w-100" %>
+            </div>
+
+            <!-- 페이지 토큰 (숨김) -->
+            <%= f.hidden_field :page_token, value: params[:page_token] %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 오류 메시지 -->
+  <% if @error %>
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="alert alert-danger" role="alert">
+          <i class="fas fa-exclamation-triangle"></i>
+          <%= @error %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- 검색 결과 -->
+  <% if @search_results %>
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+              <i class="fas fa-list"></i>
+              검색 결과
+              <% if @search_results[:total_results] %>
+                <span class="badge bg-secondary">
+                  <%= number_with_delimiter(@search_results[:total_results]) %>개
+                </span>
+              <% end %>
+            </h5>
+            
+            <!-- 페이지네이션 (상단) -->
+            <% if @search_results[:next_page_token] || @search_results[:prev_page_token] %>
+              <div class="d-flex gap-2">
+                <% if @search_results[:prev_page_token] %>
+                  <%= link_to "← 이전", 
+                             search_results_path(
+                               q: @query, 
+                               region: @region, 
+                               duration: @duration, 
+                               order: @order,
+                               published_after: params[:published_after],
+                               published_before: params[:published_before],
+                               page_token: @search_results[:prev_page_token]
+                             ), 
+                             class: "btn btn-sm btn-outline-secondary" %>
+                <% end %>
+                
+                <% if @search_results[:next_page_token] %>
+                  <%= link_to "다음 →", 
+                             search_results_path(
+                               q: @query, 
+                               region: @region, 
+                               duration: @duration, 
+                               order: @order,
+                               published_after: params[:published_after],
+                               published_before: params[:published_before],
+                               page_token: @search_results[:next_page_token]
+                             ), 
+                             class: "btn btn-sm btn-outline-secondary" %>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+          
+          <div class="card-body">
+            <% if @search_results[:items].any? %>
+              <div class="row">
+                <% @search_results[:items].each do |video| %>
+                  <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 video-card">
+                      <!-- 썸네일 -->
+                      <div class="position-relative">
+                        <%= link_to video[:watch_url], target: "_blank", class: "text-decoration-none" do %>
+                          <%= image_tag video[:thumbnail_url], 
+                                       class: "card-img-top video-thumbnail", 
+                                       alt: video[:title],
+                                       loading: "lazy" %>
+                        <% end %>
+                        
+                        <!-- Shorts 배지 (duration이 short인 경우) -->
+                        <% if @duration == 'short' %>
+                          <span class="shorts-badge">Shorts</span>
+                        <% end %>
+                      </div>
+                      
+                      <!-- 동영상 정보 -->
+                      <div class="card-body">
+                        <h6 class="card-title">
+                          <%= link_to video[:watch_url], target: "_blank", class: "text-decoration-none text-dark" do %>
+                            <%= truncate(video[:title], length: 80) %>
+                          <% end %>
+                        </h6>
+                        
+                        <p class="card-text text-muted small">
+                          <i class="fas fa-user"></i>
+                          <%= video[:channel_title] %>
+                        </p>
+                        
+                        <p class="card-text">
+                          <small class="text-muted">
+                            <%= truncate(video[:description], length: 100) %>
+                          </small>
+                        </p>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                          <small class="text-muted">
+                            <i class="fas fa-calendar"></i>
+                            <%= video[:published_at].strftime("%Y.%m.%d") %>
+                          </small>
+                          
+                          <%= link_to "YouTube에서 보기", video[:watch_url], 
+                                     target: "_blank", 
+                                     class: "btn btn-sm btn-outline-danger" %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+              
+              <!-- 페이지네이션 (하단) -->
+              <% if @search_results[:next_page_token] || @search_results[:prev_page_token] %>
+                <div class="d-flex justify-content-center gap-2 mt-4">
+                  <% if @search_results[:prev_page_token] %>
+                    <%= link_to "← 이전 페이지", 
+                               search_results_path(
+                                 q: @query, 
+                                 region: @region, 
+                                 duration: @duration, 
+                                 order: @order,
+                                 published_after: @published_after,
+                                 published_before: @published_before,
+                                 page_token: @search_results[:prev_page_token]
+                               ), 
+                               class: "btn btn-outline-secondary" %>
+                  <% end %>
+                  
+                  <% if @search_results[:next_page_token] %>
+                    <%= link_to "다음 페이지 →", 
+                               search_results_path(
+                                 q: @query, 
+                                 region: @region, 
+                                 duration: @duration, 
+                                 order: @order,
+                                 published_after: @published_after,
+                                 published_before: @published_before,
+                                 page_token: @search_results[:next_page_token]
+                               ), 
+                               class: "btn btn-outline-secondary" %>
+                  <% end %>
+                </div>
+              <% end %>
+              
+            <% else %>
+              <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">검색 결과가 없습니다</h5>
+                <p class="text-muted">다른 키워드나 필터 조건으로 다시 검색해보세요</p>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% elsif @query.present? %>
+    <!-- 검색어는 있지만 결과가 없는 경우 -->
+    <div class="row">
+      <div class="col-12">
+        <div class="text-center py-5">
+          <i class="fas fa-search fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">검색을 시작해보세요</h5>
+          <p class="text-muted">위의 검색 필터를 사용하여 원하는 동영상을 찾아보세요</p>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <!-- 초기 상태 -->
+    <div class="row">
+      <div class="col-12">
+        <div class="text-center py-5">
+          <i class="fab fa-youtube fa-3x text-danger mb-3"></i>
+          <h5>YouTube 동영상 검색</h5>
+          <p class="text-muted">검색어를 입력하고 다양한 필터를 설정하여 원하는 동영상을 찾아보세요</p>
+          
+          <!-- 인기 검색어 예시 -->
+          <div class="mt-4">
+            <h6 class="text-muted">인기 검색어 예시:</h6>
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+              <% ['케이팝', '요리', '게임', '뉴스', '운동', '여행', '음악', '영화'].each do |keyword| %>
+                <%= link_to keyword, 
+                           search_results_path(q: keyword, region: 'KR'), 
+                           class: "btn btn-sm btn-outline-primary" %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<% content_for :head do %>
+<style>
+  .video-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+  .video-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  }
+  .video-thumbnail {
+    aspect-ratio: 16/9;
+    object-fit: cover;
+  }
+  .shorts-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 0, 0, 0.9);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+  }
+  .card-title a:hover {
+    color: #dc3545 !important;
+  }
+</style>
+<% end %>

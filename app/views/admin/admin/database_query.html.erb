@@ -1,0 +1,146 @@
+<% content_for :title, "SQL 쿼리 실행" %>
+
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="display-6">
+            <i class="fas fa-terminal text-primary"></i>
+            SQL 쿼리 실행
+          </h1>
+          <p class="text-muted">읽기 전용 SELECT 쿼리만 허용됩니다</p>
+        </div>
+        <div>
+          <%= link_to "← 관리자 대시보드", admin_path, class: "btn btn-outline-secondary" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 쿼리 입력 -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-edit"></i>
+            SQL 쿼리 입력
+          </h5>
+        </div>
+        <div class="card-body">
+          <%= form_with url: admin_database_query_path, method: :get, local: true do |f| %>
+            <div class="mb-3">
+              <%= f.text_area :sql, value: @sql, class: "form-control", rows: 8, 
+                              placeholder: "SELECT * FROM trending_videos LIMIT 10;" %>
+            </div>
+            <div class="d-flex justify-content-between">
+              <%= f.submit "쿼리 실행", class: "btn btn-primary" %>
+              <div class="text-muted small">
+                <strong>허용된 쿼리:</strong> SELECT만 가능 | 
+                <strong>금지된 키워드:</strong> DELETE, UPDATE, INSERT, DROP, ALTER
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 쿼리 결과 -->
+  <% if @sql.present? %>
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="fas fa-list"></i>
+              쿼리 결과
+            </h5>
+          </div>
+          <div class="card-body">
+            <% if @error %>
+              <div class="alert alert-danger" role="alert">
+                <strong>오류:</strong> <%= @error %>
+              </div>
+            <% elsif @results.any? %>
+              <div class="mb-3">
+                <span class="badge bg-success">
+                  <%= @results.rows.length %>개 레코드 반환
+                </span>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead class="table-dark">
+                    <tr>
+                      <% @results.columns.each do |column| %>
+                        <th><%= column %></th>
+                      <% end %>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% @results.rows.each do |row| %>
+                      <tr>
+                        <% row.each do |value| %>
+                          <td>
+                            <% if value.nil? %>
+                              <span class="text-muted">NULL</span>
+                            <% elsif value.is_a?(String) && value.length > 100 %>
+                              <span title="<%= value %>">
+                                <%= truncate(value, length: 100) %>
+                              </span>
+                            <% else %>
+                              <%= value %>
+                            <% end %>
+                          </td>
+                        <% end %>
+                      </tr>
+                    <% end %>
+                  </tbody>
+                </table>
+              </div>
+            <% else %>
+              <div class="alert alert-info" role="alert">
+                쿼리가 성공적으로 실행되었지만 결과가 없습니다.
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- 예제 쿼리 -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-lightbulb"></i>
+            예제 쿼리
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6>기본 쿼리</h6>
+              <ul class="list-unstyled">
+                <li><code>SELECT * FROM trending_videos LIMIT 10;</code></li>
+                <li><code>SELECT COUNT(*) FROM trending_videos;</code></li>
+                <li><code>SELECT region_code, COUNT(*) FROM trending_videos GROUP BY region_code;</code></li>
+              </ul>
+            </div>
+            <div class="col-md-6">
+              <h6>고급 쿼리</h6>
+              <ul class="list-unstyled">
+                <li><code>SELECT * FROM trending_videos WHERE region_code = 'KR' ORDER BY published_at DESC LIMIT 5;</code></li>
+                <li><code>SELECT AVG(view_count) FROM trending_videos WHERE region_code = 'KR';</code></li>
+                <li><code>SELECT * FROM collection_logs ORDER BY started_at DESC LIMIT 10;</code></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

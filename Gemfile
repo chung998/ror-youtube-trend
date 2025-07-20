@@ -39,13 +39,21 @@ gem "thruster", require: false
 
 # HTTP 클라이언트 (YouTube API 호출용)
 gem "net-http"
+gem "httparty"
+
+# Google YouTube API v3 Ruby Client (최신 방식)
+gem "google-apis-youtube_v3"
 
 # 환경변수 관리
 gem "dotenv-rails"
 
-# Bootstrap for UI
-gem "bootstrap", "~> 5.3"
-gem "sassc-rails"
+# Bootstrap for UI (using CDN)
+# gem "bootstrap", "~> 5.3"
+# gem "sassc-rails"
+
+# Rails Admin for admin interface (인증 없이 사용)
+gem "rails_admin"
+# gem "devise" # 개발 단계에서 비활성화
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
@@ -69,3 +77,4 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 end
+gem "cssbundling-rails"

@@ -1,0 +1,139 @@
+<% content_for :title, "데이터베이스 테이블: #{@table_name}" %>
+
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="display-6">
+            <i class="fas fa-table text-primary"></i>
+            테이블: <code><%= @table_name %></code>
+          </h1>
+          <p class="text-muted">총 <%= number_with_delimiter(@total_count) %>개 레코드</p>
+        </div>
+        <div>
+          <%= link_to "← 관리자 대시보드", admin_path, class: "btn btn-outline-secondary" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 테이블 정보 -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-info-circle"></i>
+            테이블 구조
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>컬럼명</th>
+                  <th>타입</th>
+                  <th>NULL 허용</th>
+                  <th>기본값</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @columns.each do |column| %>
+                  <tr>
+                    <td><code><%= column.name %></code></td>
+                    <td><span class="badge bg-info"><%= column.type %></span></td>
+                    <td><%= column.null ? "YES" : "NO" %></td>
+                    <td><code><%= column.default || "NULL" %></code></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 데이터 -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">
+            <i class="fas fa-list"></i>
+            데이터 (페이지 <%= @page %>/<%= @total_pages %>)
+          </h5>
+          <!-- 페이지네이션 -->
+          <% if @total_pages > 1 %>
+            <nav>
+              <ul class="pagination pagination-sm mb-0">
+                <% if @page > 1 %>
+                  <li class="page-item">
+                    <%= link_to "이전", admin_database_table_path(table: @table_name, page: @page - 1), class: "page-link" %>
+                  </li>
+                <% end %>
+                
+                <% start_page = [@page - 2, 1].max %>
+                <% end_page = [start_page + 4, @total_pages].min %>
+                
+                <% (start_page..end_page).each do |page_num| %>
+                  <li class="page-item <%= 'active' if page_num == @page %>">
+                    <%= link_to page_num, admin_database_table_path(table: @table_name, page: page_num), class: "page-link" %>
+                  </li>
+                <% end %>
+                
+                <% if @page < @total_pages %>
+                  <li class="page-item">
+                    <%= link_to "다음", admin_database_table_path(table: @table_name, page: @page + 1), class: "page-link" %>
+                  </li>
+                <% end %>
+              </ul>
+            </nav>
+          <% end %>
+        </div>
+        <div class="card-body">
+          <% if @rows.any? %>
+            <div class="table-responsive">
+              <table class="table table-sm table-hover">
+                <thead class="table-dark">
+                  <tr>
+                    <% @columns.each do |column| %>
+                      <th><%= column.name %></th>
+                    <% end %>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @rows.each do |row| %>
+                    <tr>
+                      <% @columns.each do |column| %>
+                        <td>
+                          <% value = row[column.name] %>
+                          <% if value.nil? %>
+                            <span class="text-muted">NULL</span>
+                          <% elsif value.is_a?(String) && value.length > 100 %>
+                            <span title="<%= value %>">
+                              <%= truncate(value, length: 100) %>
+                            </span>
+                          <% else %>
+                            <%= value %>
+                          <% end %>
+                        </td>
+                      <% end %>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          <% else %>
+            <div class="text-center py-4">
+              <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+              <p class="text-muted">데이터가 없습니다.</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

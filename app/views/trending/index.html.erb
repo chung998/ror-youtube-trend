@@ -35,7 +35,9 @@
                        ['🇯🇵 일본', 'JP'],
                        ['🇬🇧 영국', 'GB'],
                        ['🇩🇪 독일', 'DE'],
-                       ['🇫🇷 프랑스', 'FR']
+                       ['🇫🇷 프랑스', 'FR'],
+                       ['🇻🇳 베트남', 'VN'],
+                       ['🇮🇩 인도네시아', 'ID']
                      ], @region),
                      {}, 
                      { class: "form-select", onchange: "this.form.submit();" } %>
@@ -170,12 +172,16 @@
       </p>
       
       <!-- 수동 수집 버튼 (임시로 모든 사용자에게 표시) -->
-      <div>
-        <%= button_to "지금 수집하기", collect_now_path, 
-                      params: { region: @region || 'KR', type: @type || 'all' },
+      <div class="mb-3">
+        <%= button_to "#{@region || 'KR'} 지역 수집하기", collect_country_path(region: @region || 'KR'), 
                       method: :post,
-                      class: "btn btn-primary btn-lg",
+                      class: "btn btn-primary btn-lg me-2",
                       data: { confirm: "#{@region || 'KR'} 지역의 YouTube 트렌드 데이터를 수집하시겠습니까?" } %>
+        
+        <%= button_to "전체 국가 수집하기", collect_all_countries_path, 
+                      method: :post,
+                      class: "btn btn-warning btn-lg",
+                      data: { confirm: "모든 지원 국가의 YouTube 트렌드 데이터를 수집하시겠습니까? 이 작업은 시간이 오래 걸릴 수 있습니다." } %>
       </div>
     </div>
   <% end %>

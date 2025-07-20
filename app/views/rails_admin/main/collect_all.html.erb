@@ -1,0 +1,89 @@
+<div class="content-header">
+  <h1>
+    <%= t("admin.actions.collect_all.menu", default: "전체 국가 데이터 수집") %>
+    <small><%= t("admin.actions.collect_all.breadcrumb", default: "모든 지원 국가의 YouTube 트렌딩 데이터를 일괄 수집합니다") %></small>
+  </h1>
+</div>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="box box-warning">
+        <div class="box-header with-border">
+          <h3 class="box-title">전체 수집 실행</h3>
+        </div>
+        
+        <div class="box-body">
+          <div class="alert alert-warning">
+            <i class="fa fa-warning"></i>
+            <strong>주의:</strong> 이 작업은 모든 지원 국가 (KR, US, JP, GB, DE, FR)의 데이터를 수집합니다. 
+            API 할당량을 많이 사용할 수 있으니 신중하게 실행하세요.
+          </div>
+          
+          <p>다음 국가들의 데이터가 수집됩니다:</p>
+          <ul>
+            <li>🇰🇷 대한민국 (KR)</li>
+            <li>🇺🇸 미국 (US)</li>
+            <li>🇯🇵 일본 (JP)</li>
+            <li>🇬🇧 영국 (GB)</li>
+            <li>🇩🇪 독일 (DE)</li>
+            <li>🇫🇷 프랑스 (FR)</li>
+          </ul>
+        </div>
+        
+        <%= form_tag rails_admin.collect_all_path(model_name: @abstract_model.to_param), method: :post do %>
+          <div class="box-footer">
+            <%= submit_tag "전체 수집 시작", class: "btn btn-warning btn-lg", 
+                confirm: "정말로 모든 국가의 데이터를 수집하시겠습니까? 이 작업은 시간이 오래 걸릴 수 있습니다." %>
+            <%= link_to "취소", rails_admin.index_path(model_name: @abstract_model.to_param), class: "btn btn-default" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="box box-info">
+        <div class="box-header with-border">
+          <h3 class="box-title">현재 수집 상태</h3>
+        </div>
+        <div class="box-body">
+          <% total_collected = @collection_status.count { |s| s[:collected] } %>
+          <div class="info-box">
+            <span class="info-box-icon bg-blue">
+              <i class="fa fa-database"></i>
+            </span>
+            <div class="info-box-content">
+              <span class="info-box-text">전체 진행률</span>
+              <span class="info-box-number">
+                <%= total_collected %> / <%= @collection_status.length %>
+              </span>
+            </div>
+          </div>
+          
+          <hr>
+          
+          <% @collection_status.each do |status| %>
+            <div class="progress-group">
+              <span class="progress-text"><%= status[:region] %></span>
+              <span class="float-right">
+                <% if status[:collected] %>
+                  <span class="text-success">
+                    <i class="fa fa-check"></i> <%= status[:count] %>개
+                  </span>
+                <% else %>
+                  <span class="text-danger">
+                    <i class="fa fa-times"></i> 미수집
+                  </span>
+                <% end %>
+              </span>
+              <div class="progress progress-sm">
+                <div class="progress-bar progress-bar-<%= status[:collected] ? 'success' : 'danger' %>" 
+                     style="width: <%= status[:collected] ? '100' : '0' %>%"></div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

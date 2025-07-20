@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_20_022954) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_20_132421) do
   create_table "collection_logs", force: :cascade do |t|
     t.string "region_code", limit: 2, null: false
     t.string "collection_type", default: "all", null: false
@@ -27,6 +27,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_20_022954) do
     t.index ["status"], name: "index_collection_logs_on_status"
   end
 
+  create_table "sessions", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "ip_address"
+    t.string "user_agent"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
   create_table "trending_videos", force: :cascade do |t|
     t.string "video_id", limit: 11, null: false
     t.text "title", null: false
@@ -41,28 +50,26 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_20_022954) do
     t.text "thumbnail_url"
     t.string "region_code", limit: 2, null: false
     t.boolean "is_shorts", default: false
-    t.datetime "collected_at", null: false
-    t.integer "user_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.date "collection_date"
+    t.index ["collection_date"], name: "index_trending_videos_on_collection_date"
     t.index ["is_shorts", "view_count"], name: "index_trending_videos_on_is_shorts_and_view_count"
     t.index ["published_at"], name: "index_trending_videos_on_published_at"
-    t.index ["region_code", "collected_at"], name: "index_trending_videos_on_region_code_and_collected_at"
-    t.index ["user_id"], name: "index_trending_videos_on_user_id"
-    t.index ["video_id", "region_code", "collected_at"], name: "unique_video_region_date", unique: true
+    t.index ["region_code", "collection_date"], name: "index_trending_videos_on_region_code_and_collection_date"
+    t.index ["region_code"], name: "index_trending_videos_on_region_code_and_collected_at"
+    t.index ["video_id", "region_code", "collection_date"], name: "index_trending_videos_unique_daily", unique: true
+    t.index ["video_id", "region_code"], name: "unique_video_region_date", unique: true
     t.index ["view_count"], name: "index_trending_videos_on_view_count"
   end
 
   create_table "users", force: :cascade do |t|
-    t.string "email", null: false
+    t.string "email_address", null: false
     t.string "password_digest", null: false
-    t.boolean "admin", default: false
-    t.boolean "verified", default: false
-    t.datetime "last_sign_in_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end
 
-  add_foreign_key "trending_videos", "users"
+  add_foreign_key "sessions", "users"
 end

@@ -1,79 +1,121 @@
-require 'net/http'
-require 'json'
-require 'uri'
+require 'google/apis/youtube_v3'
+require 'googleauth'
 
 class YoutubeDataService
   YOUTUBE_API_KEY = ENV['YOUTUBE_API_KEY']
-  BASE_URL = 'https://www.googleapis.com/youtube/v3'
   
   def initialize
-    @http = Net::HTTP
+    @service = Google::Apis::YoutubeV3::YouTubeService.new
+    @service.key = YOUTUBE_API_KEY
   end
   
   # 메인 데이터 수집 메서드
   def fetch_trending_videos(region_code, type = 'all', max_results = 50)
-    url = build_url(region_code, max_results)
-    response = make_api_request(url)
-    
-    return [] unless response['items']
-    
-    videos = response['items'].map { |item| parse_video_data(item) }
-    
-    # 타입별 필터링
-    filter_videos_by_type(videos, type)
+    case type
+    when 'shorts'
+      fetch_popular_shorts(region_code, max_results)
+    when 'videos'
+      fetch_regular_videos(region_code, max_results)
+    else
+      # 'all'인 경우 일반 비디오와 쇼츠를 따로 수집해서 합침
+      regular_videos = fetch_regular_videos(region_code, max_results / 2)
+      shorts_videos = fetch_popular_shorts(region_code, max_results / 2)
+      regular_videos + shorts_videos
+    end
   end
   
   private
   
-  # YouTube API URL 생성
-  def build_url(region_code, max_results)
-    params = {
-      part: 'snippet,statistics,contentDetails',
-      chart: 'mostPopular',
-      regionCode: region_code,
-      maxResults: max_results,
-      key: YOUTUBE_API_KEY
-    }
-    
-    "#{BASE_URL}/videos?#{params.to_query}"
+  # 일반 비디오 수집 (trending API 사용)
+  def fetch_regular_videos(region_code, max_results = 25)
+    begin
+      response = @service.list_videos(
+        'snippet,statistics,contentDetails',
+        chart: 'mostPopular',
+        region_code: region_code,
+        max_results: max_results,
+        video_category_id: nil # 모든 카테고리
+      )
+      
+      videos = response.items.map { |item| parse_video_data(item) }
+      # 일반 비디오만 필터링 (60초 초과)
+      videos.reject { |video| video[:is_shorts] }
+      
+    rescue Google::Apis::Error => e
+      Rails.logger.error "YouTube trending API 에러: #{e.message}"
+      raise "YouTube trending API 에러: #{e.message}"
+    end
   end
   
-  # API 요청 실행
-  def make_api_request(url)
-    uri = URI(url)
-    response = Net::HTTP.get_response(uri)
+  # 쇼츠 수집 (search API 사용)
+  def fetch_popular_shorts(region_code, max_results = 25)
+    shorts_results = []
+    one_week_ago = 1.week.ago
     
-    unless response.code == '200'
-      Rails.logger.error "YouTube API 에러: #{response.code} - #{response.body}"
-      raise "YouTube API 에러: #{response.code}"
-    end
+    # 여러 키워드로 검색해서 다양한 쇼츠 수집
+    search_keywords = get_shorts_keywords_for_region(region_code)
     
-    JSON.parse(response.body)
-  rescue JSON::ParserError => e
-    Rails.logger.error "YouTube API 응답 파싱 실패: #{e.message}"
-    raise "YouTube API 응답 파싱 실패: #{e.message}"
-  rescue => e
-    Rails.logger.error "YouTube API 요청 실패: #{e.message}"
-    raise "YouTube API 요청 실패: #{e.message}"
+    # 단순 검색으로 조회수 순 10개만 가져오기
+    begin
+      search_response = @service.list_searches(
+        'snippet',
+        q: 'a', # 가장 일반적인 문자
+        type: 'video',
+        order: 'viewCount', # 조회수 순으로 정렬
+        region_code: region_code,
+        video_duration: 'short', # 4분 이하 (쇼츠)
+        max_results: 10, # 10개만 가져오기
+        relevance_language: get_language_for_region(region_code)
+      )
+        
+        if search_response.items.any?
+          video_ids = search_response.items.map(&:id).map(&:video_id)
+          
+          # 비디오 세부정보 가져오기
+          details_response = @service.list_videos(
+            'snippet,statistics,contentDetails',
+            id: video_ids.join(',')
+          )
+          
+          shorts_candidates = details_response.items.map { |item| parse_video_data(item) }
+          
+          # 1. 실제 쇼츠만 필터링 (60초 이하)
+          # 2. 최근 1주일간 게시된 것만 필터링
+          recent_shorts = shorts_candidates.select do |video| 
+            video[:is_shorts] && 
+            video[:published_at] && 
+            Time.parse(video[:published_at].to_s) >= one_week_ago
+          end
+          
+          shorts_results.concat(recent_shorts)
+        end
+        
+      rescue Google::Apis::Error => e
+        Rails.logger.warn "YouTube search API에서 쇼츠 수집 실패: #{e.message}"
+      end
+    
+    # 조회수순으로 이미 정렬되어 있으므로 그대로 반환
+    shorts_results.uniq { |video| video[:video_id] }
+                  .first(max_results)
   end
   
   # API 응답 데이터를 모델 형식으로 변환
   def parse_video_data(item)
-    duration_seconds = parse_duration(item.dig('contentDetails', 'duration'))
+    duration_seconds = parse_duration(item.content_details.duration)
     
     {
-      video_id: item['id'],
-      title: item.dig('snippet', 'title'),
-      description: item.dig('snippet', 'description'),
-      channel_title: item.dig('snippet', 'channelTitle'),
-      channel_id: item.dig('snippet', 'channelId'),
-      view_count: item.dig('statistics', 'viewCount')&.to_i || 0,
-      like_count: item.dig('statistics', 'likeCount')&.to_i || 0,
-      comment_count: item.dig('statistics', 'commentCount')&.to_i || 0,
-      published_at: item.dig('snippet', 'publishedAt'),
-      duration: item.dig('contentDetails', 'duration'),
-      thumbnail_url: item.dig('snippet', 'thumbnails', 'high', 'url'),
-      is_shorts: duration_seconds <= 60,
+      video_id: item.id,
+      title: item.snippet.title,
+      description: item.snippet.description,
+      channel_title: item.snippet.channel_title,
+      channel_id: item.snippet.channel_id,
+      view_count: item.statistics.view_count&.to_i || 0,
+      like_count: item.statistics.like_count&.to_i || 0,
+      comment_count: item.statistics.comment_count&.to_i || 0,
+      published_at: item.snippet.published_at,
+      duration: item.content_details.duration,
+      thumbnail_url: item.snippet.thumbnails&.high&.url,
+      is_shorts: duration_seconds <= 60 && duration_seconds > 0,
       collected_at: Time.current
     }
   end
@@ -92,15 +134,24 @@ class YoutubeDataService
     hours * 3600 + minutes * 60 + seconds
   end
   
-  # 타입별 비디오 필터링
-  def filter_videos_by_type(videos, type)
-    case type
-    when 'shorts'
-      videos.select { |v| v[:is_shorts] }
-    when 'videos'
-      videos.reject { |v| v[:is_shorts] }
-    else
-      videos
+  # 지역 코드에 따른 언어 설정
+  def get_language_for_region(region_code)
+    case region_code.upcase
+    when 'KR' then 'ko'
+    when 'JP' then 'ja'
+    when 'US', 'GB' then 'en'
+    when 'DE' then 'de'
+    when 'FR' then 'fr'
+    when 'VN' then 'vi'
+    when 'ID' then 'id'
+    else 'en'
     end
+  end
+  
+  # 지역별 쇼츠 검색 키워드 설정 (매우 일반적인 키워드 사용)
+  def get_shorts_keywords_for_region(region_code)
+    # 모든 지역에서 공통으로 사용할 수 있는 매우 일반적인 키워드들
+    # 띄어쓰기나 모든 제목에 들어갈 수 있는 단어들 사용
+    [' ', 'a', 'the', 'and', 'in', 'to']
   end
 end

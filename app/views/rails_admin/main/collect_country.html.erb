@@ -1,0 +1,71 @@
+<div class="content-header">
+  <h1>
+    <%= t("admin.actions.collect_country.menu", default: "국가별 데이터 수집") %>
+    <small><%= t("admin.actions.collect_country.breadcrumb", default: "특정 국가의 YouTube 트렌딩 데이터를 수집합니다") %></small>
+  </h1>
+</div>
+
+<div class="content">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="box box-primary">
+        <div class="box-header with-border">
+          <h3 class="box-title">국가 선택</h3>
+        </div>
+        
+        <%= form_tag rails_admin.collect_country_path(model_name: @abstract_model.to_param), method: :post, class: "form-horizontal" do %>
+          <div class="box-body">
+            <div class="form-group">
+              <label class="col-sm-2 control-label">국가</label>
+              <div class="col-sm-10">
+                <select name="region" class="form-control" required>
+                  <option value="">국가를 선택하세요</option>
+                  <% @regions.each do |region| %>
+                    <% region_name = case region
+                         when 'KR' then '대한민국'
+                         when 'US' then '미국'
+                         when 'JP' then '일본'
+                         when 'GB' then '영국'
+                         when 'DE' then '독일'
+                         when 'FR' then '프랑스'
+                         else region
+                       end %>
+                    <option value="<%= region %>"><%= region_name %> (<%= region %>)</option>
+                  <% end %>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="box-footer">
+            <%= submit_tag "데이터 수집 시작", class: "btn btn-primary" %>
+            <%= link_to "취소", rails_admin.index_path(model_name: @abstract_model.to_param), class: "btn btn-default" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="box box-info">
+        <div class="box-header with-border">
+          <h3 class="box-title">오늘의 수집 상태</h3>
+        </div>
+        <div class="box-body">
+          <% @collection_status.each do |status| %>
+            <div class="info-box">
+              <span class="info-box-icon <%= status[:collected] ? 'bg-green' : 'bg-red' %>">
+                <i class="fa <%= status[:collected] ? 'fa-check' : 'fa-times' %>"></i>
+              </span>
+              <div class="info-box-content">
+                <span class="info-box-text"><%= status[:region] %></span>
+                <span class="info-box-number">
+                  <%= status[:collected] ? "#{status[:count]}개 수집됨" : "미수집" %>
+                </span>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

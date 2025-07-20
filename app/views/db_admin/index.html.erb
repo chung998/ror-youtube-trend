@@ -1,0 +1,56 @@
+<% content_for :title, "데이터베이스 관리" %>
+
+<div class="container">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1 class="display-6">
+        <i class="fas fa-database"></i>
+        데이터베이스 관리
+      </h1>
+      <p class="text-muted">개발용 데이터베이스 뷰어</p>
+    </div>
+  </div>
+  
+  <!-- 테이블 목록 -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <h3>테이블 목록</h3>
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>테이블명</th>
+              <th>레코드 수</th>
+              <th>액션</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @tables.each do |table| %>
+              <tr>
+                <td><code><%= table[:name] %></code></td>
+                <td>
+                  <span class="badge bg-primary">
+                    <%= number_with_delimiter(table[:count]) %>
+                  </span>
+                </td>
+                <td>
+                  <%= link_to "보기", db_admin_table_path(table: table[:name]), 
+                             class: "btn btn-sm btn-outline-primary" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <!-- SQL 쿼리 실행 -->
+  <div class="row">
+    <div class="col-12">
+      <h3>SQL 쿼리 실행</h3>
+      <%= link_to "쿼리 실행 페이지", db_admin_query_path, 
+                 class: "btn btn-success" %>
+    </div>
+  </div>
+</div>
