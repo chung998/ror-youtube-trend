@@ -1,4 +1,6 @@
 class DbAdminController < ApplicationController
+  before_action :require_admin  # DB 관리는 관리자 권한 필요
+  
   # 임시 DB 관리 도구 (개발용)
   
   def index

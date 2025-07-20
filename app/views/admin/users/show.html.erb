@@ -1,0 +1,322 @@
+<% content_for :title, "#{@user.display_name} - 사용자 상세 - YouTube 트렌드 관리자" %>
+
+<div class="container-fluid py-4">
+  <!-- 헤더 -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h2 mb-1">
+            <i class="fas fa-user text-primary me-2"></i>
+            <%= @user.display_name %>
+          </h1>
+          <p class="text-muted mb-0">사용자 상세 정보</p>
+        </div>
+        <div>
+          <%= link_to edit_admin_user_path(@user), class: "btn btn-warning me-2" do %>
+            <i class="fas fa-edit me-1"></i> 편집
+          <% end %>
+          <%= link_to admin_users_path, class: "btn btn-outline-secondary" do %>
+            <i class="fas fa-arrow-left me-1"></i> 목록으로
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- 사용자 정보 카드 -->
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body text-center">
+          <div class="avatar avatar-xl rounded-circle bg-primary text-white mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; font-size: 2rem;">
+            <%= @user.name.first.upcase %>
+          </div>
+          
+          <h4 class="mb-1"><%= @user.display_name %></h4>
+          <p class="text-muted mb-3"><%= @user.email %></p>
+          
+          <!-- 권한 배지 -->
+          <% if @user.admin? %>
+            <span class="badge bg-danger fs-6 mb-2">
+              <i class="fas fa-crown me-1"></i>관리자
+            </span>
+          <% else %>
+            <span class="badge bg-secondary fs-6 mb-2">
+              <i class="fas fa-user me-1"></i>일반사용자
+            </span>
+          <% end %>
+          
+          <br>
+          
+          <!-- 상태 배지 -->
+          <% case @user.status %>
+          <% when 'active' %>
+            <span class="badge bg-success fs-6">
+              <i class="fas fa-check-circle me-1"></i>활성
+            </span>
+          <% when 'inactive' %>
+            <span class="badge bg-warning fs-6">
+              <i class="fas fa-pause-circle me-1"></i>비활성
+            </span>
+          <% when 'suspended' %>
+            <span class="badge bg-danger fs-6">
+              <i class="fas fa-ban me-1"></i>정지
+            </span>
+          <% end %>
+        </div>
+      </div>
+      
+      <!-- 빠른 액션 -->
+      <% unless @user == current_user %>
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white border-0">
+            <h6 class="mb-0">
+              <i class="fas fa-cogs me-2"></i>빠른 액션
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              <% if @user.admin? %>
+                <button class="btn btn-outline-warning" onclick="toggleRole(<%= @user.id %>)">
+                  <i class="fas fa-user me-2"></i>일반사용자로 변경
+                </button>
+              <% else %>
+                <button class="btn btn-outline-danger" onclick="toggleRole(<%= @user.id %>)">
+                  <i class="fas fa-crown me-2"></i>관리자로 변경
+                </button>
+              <% end %>
+              
+              <% case @user.status %>
+              <% when 'active' %>
+                <button class="btn btn-outline-warning" onclick="toggleStatus(<%= @user.id %>)">
+                  <i class="fas fa-pause me-2"></i>계정 비활성화
+                </button>
+              <% when 'inactive' %>
+                <button class="btn btn-outline-success" onclick="toggleStatus(<%= @user.id %>)">
+                  <i class="fas fa-play me-2"></i>계정 활성화
+                </button>
+              <% when 'suspended' %>
+                <button class="btn btn-outline-success" onclick="toggleStatus(<%= @user.id %>)">
+                  <i class="fas fa-unlock me-2"></i>정지 해제
+                </button>
+              <% end %>
+              
+              <% if @user.status != 'suspended' %>
+                <button class="btn btn-outline-danger" onclick="suspendUser(<%= @user.id %>)">
+                  <i class="fas fa-ban me-2"></i>계정 정지
+                </button>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    
+    <!-- 상세 정보 -->
+    <div class="col-lg-8">
+      <!-- 기본 정보 -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+          <h6 class="mb-0">
+            <i class="fas fa-info-circle me-2"></i>기본 정보
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-6 mb-3">
+              <label class="form-label fw-bold text-muted">이름</label>
+              <p class="h6"><%= @user.name %></p>
+            </div>
+            
+            <div class="col-sm-6 mb-3">
+              <label class="form-label fw-bold text-muted">이메일</label>
+              <p class="h6"><%= @user.email %></p>
+            </div>
+            
+            <div class="col-sm-6 mb-3">
+              <label class="form-label fw-bold text-muted">권한</label>
+              <p><%= @user.admin? ? '관리자' : '일반사용자' %></p>
+            </div>
+            
+            <div class="col-sm-6 mb-3">
+              <label class="form-label fw-bold text-muted">계정 상태</label>
+              <p><%= @user.status_korean %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 활동 정보 -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0">
+          <h6 class="mb-0">
+            <i class="fas fa-chart-line me-2"></i>활동 정보
+          </h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-6 mb-3">
+              <label class="form-label fw-bold text-muted">가입일</label>
+              <p class="h6">
+                <%= @user.created_at.strftime("%Y년 %m월 %d일 %H:%M") %>
+                <br>
+                <small class="text-muted">가입 후 <%= @user.days_since_signup %>일 경과</small>
+              </p>
+            </div>
+            
+            <div class="col-sm-6 mb-3">
+              <label class="form-label fw-bold text-muted">최근 로그인</label>
+              <% if @user.last_login_at %>
+                <p class="h6">
+                  <%= @user.last_login_at.strftime("%Y년 %m월 %d일 %H:%M") %>
+                  <br>
+                  <% if @user.recently_logged_in? %>
+                    <small class="text-success">최근 활동 사용자</small>
+                  <% else %>
+                    <small class="text-muted">장기간 비활성</small>
+                  <% end %>
+                </p>
+              <% else %>
+                <p class="text-muted">로그인 기록 없음</p>
+              <% end %>
+            </div>
+            
+            <div class="col-sm-6 mb-3">
+              <label class="form-label fw-bold text-muted">마지막 업데이트</label>
+              <p><%= @user.updated_at.strftime("%Y년 %m월 %d일 %H:%M") %></p>
+            </div>
+            
+            <div class="col-sm-6 mb-3">
+              <label class="form-label fw-bold text-muted">계정 ID</label>
+              <p><code>#<%= @user.id %></code></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 관리자 정보 (관리자인 경우에만) -->
+      <% if @user.admin? %>
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-danger text-white border-0">
+            <h6 class="mb-0">
+              <i class="fas fa-crown me-2"></i>관리자 권한 정보
+            </h6>
+          </div>
+          <div class="card-body">
+            <div class="alert alert-info mb-0">
+              <h6 class="alert-heading">
+                <i class="fas fa-info-circle me-2"></i>관리자 권한
+              </h6>
+              <p class="mb-0">
+                이 사용자는 관리자 권한을 가지고 있어 다음 기능에 접근할 수 있습니다:
+              </p>
+              <ul class="mb-0 mt-2">
+                <li>관리자 대시보드 및 모든 관리 기능</li>
+                <li>사용자 관리 (다른 사용자 권한 변경, 계정 관리)</li>
+                <li>데이터베이스 관리 (직접 쿼리 실행)</li>
+                <li>YouTube 데이터 수집 관리</li>
+                <li>검색 기능 사용</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript for actions -->
+<script>
+function toggleRole(userId) {
+  if (!confirm('정말로 이 사용자의 권한을 변경하시겠습니까?')) return;
+  
+  fetch(`/admin/users/${userId}/toggle_role`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert(data.message, 'success');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showAlert(data.error, 'danger');
+    }
+  })
+  .catch(error => {
+    showAlert('오류가 발생했습니다.', 'danger');
+  });
+}
+
+function toggleStatus(userId) {
+  if (!confirm('정말로 이 사용자의 계정 상태를 변경하시겠습니까?')) return;
+  
+  fetch(`/admin/users/${userId}/toggle_status`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert(data.message, 'success');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showAlert(data.error, 'danger');
+    }
+  })
+  .catch(error => {
+    showAlert('오류가 발생했습니다.', 'danger');
+  });
+}
+
+function suspendUser(userId) {
+  if (!confirm('정말로 이 사용자의 계정을 정지하시겠습니까?')) return;
+  
+  fetch(`/admin/users/${userId}/suspend`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showAlert(data.message, 'warning');
+      setTimeout(() => location.reload(), 1000);
+    } else {
+      showAlert(data.error, 'danger');
+    }
+  })
+  .catch(error => {
+    showAlert('오류가 발생했습니다.', 'danger');
+  });
+}
+
+function showAlert(message, type) {
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+  alertDiv.style.top = '20px';
+  alertDiv.style.right = '20px';
+  alertDiv.style.zIndex = '9999';
+  alertDiv.innerHTML = `
+    ${message}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  `;
+  
+  document.body.appendChild(alertDiv);
+  
+  setTimeout(() => {
+    if (alertDiv.parentNode) {
+      alertDiv.remove();
+    }
+  }, 3000);
+}
+</script> 

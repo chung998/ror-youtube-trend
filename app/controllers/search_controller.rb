@@ -1,4 +1,6 @@
 class SearchController < ApplicationController
+  before_action :require_authentication  # 로그인 필요
+
   def index
     # 검색 페이지 기본 화면 (필터 없이)
   end

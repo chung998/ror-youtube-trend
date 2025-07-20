@@ -29,8 +29,8 @@ class TrendingController < ApplicationController
   
   # 특정 국가 수집 (일반 + 쇼츠 통합)
   def collect_country
-    # 수동 수집 트리거 (현재는 임시로 인증 비활성화)
-    # return head :forbidden unless user_signed_in? && current_user.admin?
+    # 수동 수집은 관리자만 가능
+    return head :forbidden unless user_signed_in? && current_user&.admin?
     
     service = TrendingCollectionService.new
     result = service.collect_country(@region)
@@ -49,8 +49,8 @@ class TrendingController < ApplicationController
   
   # 전체 국가 수집
   def collect_all_countries
-    # 수동 수집 트리거 (현재는 임시로 인증 비활성화)
-    # return head :forbidden unless user_signed_in? && current_user.admin?
+    # 수동 수집은 관리자만 가능
+    return head :forbidden unless user_signed_in? && current_user&.admin?
     
     service = TrendingCollectionService.new
     result = service.collect_all_countries
@@ -109,12 +109,5 @@ class TrendingController < ApplicationController
     }
   end
   
-  # 임시 사용자 인증 헬퍼 (나중에 실제 인증 시스템으로 대체)
-  def user_signed_in?
-    false # TODO: 실제 인증 구현 후 수정
-  end
-  
-  def current_user
-    nil # TODO: 실제 인증 구현 후 수정
-  end
+
 end

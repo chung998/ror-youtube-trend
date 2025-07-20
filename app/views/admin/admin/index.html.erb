@@ -1,299 +1,502 @@
 <% content_for :title, "관리자 대시보드 - YouTube 트렌드" %>
 
-<div class="container-fluid">
+<div class="container-fluid py-4">
   <!-- 헤더 -->
   <div class="row mb-4">
     <div class="col-12">
-      <h1 class="display-6">
-        <i class="fas fa-tachometer-alt text-primary"></i>
-        관리자 대시보드
-      </h1>
-      <p class="text-muted">YouTube 트렌드 데이터 수집 현황 및 시스템 관리</p>
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h2 mb-1">
+            <i class="fas fa-shield-alt text-primary me-2"></i>
+            관리자 대시보드
+          </h1>
+          <p class="text-muted mb-0">YouTube 트렌드 데이터 수집 현황 및 시스템 관리</p>
+        </div>
+        <div>
+          <button class="btn btn-primary" onclick="location.reload()">
+            <i class="fas fa-sync-alt me-1"></i> 새로고침
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- 관리 메뉴 탭 -->
+  <!-- 통계 카드 -->
+  <div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-1 text-primary fw-bold"><%= @collection_stats[:today_collections] %></h3>
+              <p class="text-muted mb-0 small">오늘 수집 작업</p>
+            </div>
+            <div class="col-auto">
+              <div class="icon-shape bg-primary bg-opacity-10 text-primary rounded-circle">
+                <i class="fas fa-calendar-day fa-lg"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-1 text-success fw-bold"><%= @collection_stats[:successful_today] %></h3>
+              <p class="text-muted mb-0 small">성공한 수집</p>
+            </div>
+            <div class="col-auto">
+              <div class="icon-shape bg-success bg-opacity-10 text-success rounded-circle">
+                <i class="fas fa-check-circle fa-lg"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-1 text-danger fw-bold"><%= @collection_stats[:failed_today] %></h3>
+              <p class="text-muted mb-0 small">실패한 수집</p>
+            </div>
+            <div class="col-auto">
+              <div class="icon-shape bg-danger bg-opacity-10 text-danger rounded-circle">
+                <i class="fas fa-exclamation-triangle fa-lg"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="row align-items-center">
+            <div class="col">
+              <h3 class="mb-1 text-info fw-bold"><%= number_with_delimiter(@collection_stats[:total_videos]) %></h3>
+              <p class="text-muted mb-0 small">총 비디오 수</p>
+            </div>
+            <div class="col-auto">
+              <div class="icon-shape bg-info bg-opacity-10 text-info rounded-circle">
+                <i class="fas fa-video fa-lg"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 수집 방식 안내 -->
   <div class="row mb-4">
     <div class="col-12">
-      <ul class="nav nav-tabs" id="adminTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
-            <i class="fas fa-chart-line"></i> 대시보드
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="collection-tab" data-bs-toggle="tab" data-bs-target="#collection" type="button" role="tab">
-            <i class="fas fa-download"></i> 데이터 수집
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="database-tab" data-bs-toggle="tab" data-bs-target="#database" type="button" role="tab">
-            <i class="fas fa-database"></i> 데이터베이스 관리
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs" type="button" role="tab">
-            <i class="fas fa-history"></i> 수집 로그
-          </button>
-        </li>
-      </ul>
+      <div class="alert alert-info border-0 shadow-sm" role="alert">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <i class="fas fa-hand-pointer fa-2x text-info"></i>
+          </div>
+          <div>
+            <h6 class="alert-heading mb-1">수동 수집 모드</h6>
+            <p class="mb-0">
+              자동 스케줄링이 비활성화되어 있습니다. 
+              <strong>전체 수집 버튼</strong> 또는 <strong>개별 국가 버튼</strong>을 클릭하여 수동으로 수집하세요.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- 탭 컨텐츠 -->
-  <div class="tab-content" id="adminTabsContent">
-    <!-- 대시보드 탭 -->
-    <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
-      <!-- 통계 카드 -->
-      <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-          <div class="card bg-primary text-white">
-            <div class="card-body">
-              <div class="d-flex justify-content-between">
-                <div>
-                  <h4><%= @collection_stats[:today_collections] %></h4>
-                  <p class="mb-0">오늘 수집 작업</p>
-                </div>
-                <div class="align-self-center">
-                  <i class="fas fa-calendar-day fa-2x"></i>
-                </div>
-              </div>
-            </div>
-          </div>
+  <!-- 메인 탭 네비게이션 -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+          <ul class="nav nav-pills nav-fill" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active px-4 py-3" id="collection-tab" data-bs-toggle="pill" data-bs-target="#collection" type="button" role="tab">
+                <i class="fas fa-download me-2"></i>
+                <span class="d-none d-sm-inline">데이터 수집</span>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link px-4 py-3" id="database-tab" data-bs-toggle="pill" data-bs-target="#database" type="button" role="tab">
+                <i class="fas fa-database me-2"></i>
+                <span class="d-none d-sm-inline">데이터베이스</span>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link px-4 py-3" id="users-tab" data-bs-toggle="pill" data-bs-target="#users" type="button" role="tab">
+                <i class="fas fa-users me-2"></i>
+                <span class="d-none d-sm-inline">사용자 관리</span>
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link px-4 py-3" id="logs-tab" data-bs-toggle="pill" data-bs-target="#logs" type="button" role="tab">
+                <i class="fas fa-history me-2"></i>
+                <span class="d-none d-sm-inline">수집 로그</span>
+              </button>
+            </li>
+          </ul>
         </div>
-        
-        <div class="col-md-3 mb-3">
-          <div class="card bg-success text-white">
-            <div class="card-body">
-              <div class="d-flex justify-content-between">
-                <div>
-                  <h4><%= @collection_stats[:successful_today] %></h4>
-                  <p class="mb-0">성공한 수집</p>
-                </div>
-                <div class="align-self-center">
-                  <i class="fas fa-check-circle fa-2x"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="col-md-3 mb-3">
-          <div class="card bg-danger text-white">
-            <div class="card-body">
-              <div class="d-flex justify-content-between">
-                <div>
-                  <h4><%= @collection_stats[:failed_today] %></h4>
-                  <p class="mb-0">실패한 수집</p>
-                </div>
-                <div class="align-self-center">
-                  <i class="fas fa-exclamation-triangle fa-2x"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="col-md-3 mb-3">
-          <div class="card bg-info text-white">
-            <div class="card-body">
-              <div class="d-flex justify-content-between">
-                <div>
-                  <h4><%= number_with_delimiter(@collection_stats[:total_videos]) %></h4>
-                  <p class="mb-0">총 비디오 수</p>
-                </div>
-                <div class="align-self-center">
-                  <i class="fas fa-video fa-2x"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- 다음 예정 수집 시간 -->
-      <div class="row">
-        <div class="col-12">
-          <div class="card border-warning">
-            <div class="card-body">
-              <h5 class="card-title">
-                <i class="fas fa-clock text-warning"></i>
-                다음 예정된 수집
-              </h5>
-              <p class="card-text">
-                <strong><%= @next_scheduled.strftime("%Y년 %m월 %d일 %H시 %M분") %></strong>
-                (<%= time_ago_in_words(@next_scheduled) %> 후)
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 데이터 수집 탭 -->
-    <div class="tab-pane fade" id="collection" role="tabpanel">
-      <div class="row">
-        <div class="col-12">
-          <div class="card">
-            <div class="card-header">
-              <h5 class="mb-0">
-                <i class="fas fa-play-circle"></i>
-                수동 데이터 수집
-              </h5>
-            </div>
-            <div class="card-body">
-              <p class="text-muted">지역별로 즉시 YouTube 트렌드 데이터를 수집할 수 있습니다.</p>
+        <div class="card-body p-4">
+          <div class="tab-content" id="adminTabsContent">
+            <!-- 데이터 수집 탭 -->
+            <div class="tab-pane fade show active" id="collection" role="tabpanel">
               <div class="row">
-                <% [
-                     ['🇰🇷 한국', 'KR'],
-                     ['🇺🇸 미국', 'US'], 
-                     ['🇯🇵 일본', 'JP'],
-                     ['🇬🇧 영국', 'GB'],
-                     ['🇩🇪 독일', 'DE'],
-                     ['🇫🇷 프랑스', 'FR']
-                   ].each do |name, code| %>
-                  <div class="col-md-4 col-lg-2 mb-2">
-                    <%= button_to name, collect_now_admin_path, 
-                                  params: { region: code, type: 'all' },
-                                  method: :post,
-                                  class: "btn btn-outline-primary w-100",
-                                  data: { confirm: "#{name} 지역의 트렌드 데이터를 수집하시겠습니까?" } %>
+                <div class="col-12">
+                  <h5 class="mb-3">
+                    <i class="fas fa-play-circle text-primary me-2"></i>
+                    수동 데이터 수집
+                  </h5>
+                  <p class="text-muted mb-4">지역별로 즉시 YouTube 트렌드 데이터를 수집할 수 있습니다.</p>
+                  
+                  <!-- 전체 수집 버튼 -->
+                  <div class="row mb-4">
+                    <div class="col-12">
+                      <%= button_to "🌍 전체 국가 수집", admin_collect_all_path, 
+                                    method: :post,
+                                    class: "btn btn-primary btn-lg w-100 py-3 shadow",
+                                    data: { 
+                                      confirm: "모든 등록된 국가의 트렌드 데이터를 수집하시겠습니까? (약 5-10분 소요)",
+                                      disable_with: "전체 수집 중... 잠시만 기다려주세요"
+                                    } %>
+                      <small class="text-muted d-block mt-2 text-center">
+                        <i class="fas fa-info-circle me-1"></i>
+                        한국, 미국, 일본, 영국, 독일, 프랑스, 베트남, 인도네시아 (총 8개국)
+                      </small>
+                    </div>
                   </div>
+                  
+                  <h6 class="text-muted mb-3">개별 국가 수집</h6>
+                  <div class="row g-2">
+                    <% [
+                         ['🇰🇷 한국', 'KR', 'primary'],
+                         ['🇺🇸 미국', 'US', 'info'], 
+                         ['🇯🇵 일본', 'JP', 'danger'],
+                         ['🇬🇧 영국', 'GB', 'success'],
+                         ['🇩🇪 독일', 'DE', 'warning'],
+                         ['🇫🇷 프랑스', 'FR', 'secondary'],
+                         ['🇻🇳 베트남', 'VN', 'dark'],
+                         ['🇮🇩 인도네시아', 'ID', 'info']
+                       ].each do |name, code, color| %>
+                      <div class="col-lg-3 col-md-4 col-6">
+                        <%= button_to name, admin_collect_now_path, 
+                                      params: { region: code, type: 'all' },
+                                      method: :post,
+                                      class: "btn btn-outline-#{color} btn-sm w-100 py-2",
+                                      data: { 
+                                        confirm: "#{name} 지역의 트렌드 데이터를 수집하시겠습니까?",
+                                        disable_with: "수집 중..."
+                                      } %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 데이터베이스 관리 탭 -->
+            <div class="tab-pane fade" id="database" role="tabpanel">
+              <div class="row g-4">
+                <div class="col-lg-8">
+                  <h5 class="mb-3">
+                    <i class="fas fa-table text-primary me-2"></i>
+                    테이블 목록
+                  </h5>
+                  <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                      <thead class="table-light">
+                        <tr>
+                          <th class="border-0">테이블명</th>
+                          <th class="border-0">레코드 수</th>
+                          <th class="border-0 text-center">액션</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% @table_info.each do |table| %>
+                          <tr>
+                            <td>
+                              <code class="text-primary"><%= table[:name] %></code>
+                            </td>
+                            <td>
+                              <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
+                                <%= number_with_delimiter(table[:count]) %>
+                              </span>
+                            </td>
+                            <td class="text-center">
+                              <%= link_to admin_database_table_path(table: table[:name]), 
+                                         class: "btn btn-outline-primary btn-sm px-3" do %>
+                                <i class="fas fa-eye me-1"></i> 보기
+                              <% end %>
+                            </td>
+                          </tr>
+                        <% end %>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                <div class="col-lg-4">
+                  <h5 class="mb-3">
+                    <i class="fas fa-terminal text-primary me-2"></i>
+                    SQL 쿼리
+                  </h5>
+                  <div class="d-grid">
+                    <%= link_to admin_database_query_path, 
+                               class: "btn btn-success btn-lg shadow-sm" do %>
+                      <i class="fas fa-code me-2"></i>
+                      쿼리 실행 페이지
+                    <% end %>
+                  </div>
+                  <p class="text-muted small mt-2">
+                    <i class="fas fa-info-circle me-1"></i>
+                    읽기 전용 SELECT 쿼리만 실행 가능합니다.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- 사용자 관리 탭 -->
+            <div class="tab-pane fade" id="users" role="tabpanel">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0">
+                  <i class="fas fa-users text-primary me-2"></i>
+                  사용자 관리
+                </h5>
+                <%= link_to admin_users_path, class: "btn btn-primary" do %>
+                  <i class="fas fa-list me-1"></i> 전체 사용자 목록
                 <% end %>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 데이터베이스 관리 탭 -->
-    <div class="tab-pane fade" id="database" role="tabpanel">
-      <div class="row mb-4">
-        <div class="col-12">
-          <div class="card">
-            <div class="card-header">
-              <h5 class="mb-0">
-                <i class="fas fa-table"></i>
-                테이블 목록
-              </h5>
-            </div>
-            <div class="card-body">
-              <div class="table-responsive">
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>테이블명</th>
-                      <th>레코드 수</th>
-                      <th>액션</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% get_table_info.each do |table| %>
-                      <tr>
-                        <td><code><%= table[:name] %></code></td>
-                        <td>
-                          <span class="badge bg-primary">
-                            <%= number_with_delimiter(table[:count]) %>
-                          </span>
-                        </td>
-                        <td>
-                          <%= link_to "보기", admin_database_table_path(table: table[:name]), 
-                                     class: "btn btn-sm btn-outline-primary" %>
-                        </td>
-                      </tr>
-                    <% end %>
-                  </tbody>
-                </table>
+              
+              <!-- 사용자 통계 카드 -->
+              <div class="row g-3 mb-4">
+                <div class="col-lg-3 col-md-6">
+                  <div class="card border-0 bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-body text-white">
+                      <div class="d-flex align-items-center">
+                        <div class="me-3">
+                          <i class="fas fa-users fa-2x opacity-75"></i>
+                        </div>
+                        <div>
+                          <h4 class="mb-0 fw-bold"><%= User.count %></h4>
+                          <small class="opacity-75">총 사용자</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                  <div class="card border-0 bg-gradient" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="card-body text-white">
+                      <div class="d-flex align-items-center">
+                        <div class="me-3">
+                          <i class="fas fa-crown fa-2x opacity-75"></i>
+                        </div>
+                        <div>
+                          <h4 class="mb-0 fw-bold"><%= User.admins.count %></h4>
+                          <small class="opacity-75">관리자</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                  <div class="card border-0 bg-gradient" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <div class="card-body text-white">
+                      <div class="d-flex align-items-center">
+                        <div class="me-3">
+                          <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                        </div>
+                        <div>
+                          <h4 class="mb-0 fw-bold"><%= User.active.count %></h4>
+                          <small class="opacity-75">활성 계정</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="col-lg-3 col-md-6">
+                  <div class="card border-0 bg-gradient" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    <div class="card-body text-white">
+                      <div class="d-flex align-items-center">
+                        <div class="me-3">
+                          <i class="fas fa-clock fa-2x opacity-75"></i>
+                        </div>
+                        <div>
+                          <h4 class="mb-0 fw-bold"><%= User.recent_login.count %></h4>
+                          <small class="opacity-75">최근 활동</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 최근 가입 사용자 -->
+              <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0">
+                  <h6 class="mb-0">
+                    <i class="fas fa-user-plus text-success me-2"></i>
+                    최근 가입 사용자 (최근 5명)
+                  </h6>
+                </div>
+                <div class="card-body p-0">
+                  <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                      <thead class="table-light">
+                        <tr>
+                          <th>이름</th>
+                          <th>이메일</th>
+                          <th>권한</th>
+                          <th>상태</th>
+                          <th>가입일</th>
+                          <th>액션</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% User.order(created_at: :desc).limit(5).each do |user| %>
+                          <tr>
+                            <td>
+                              <div class="d-flex align-items-center">
+                                <div class="avatar avatar-sm rounded-circle bg-primary text-white me-2 d-flex align-items-center justify-content-center">
+                                  <%= user.name.first.upcase %>
+                                </div>
+                                <strong><%= user.display_name %></strong>
+                              </div>
+                            </td>
+                            <td>
+                              <small class="text-muted"><%= user.email %></small>
+                            </td>
+                            <td>
+                              <% if user.admin? %>
+                                <span class="badge bg-danger">관리자</span>
+                              <% else %>
+                                <span class="badge bg-secondary">일반사용자</span>
+                              <% end %>
+                            </td>
+                            <td>
+                              <% case user.status %>
+                              <% when 'active' %>
+                                <span class="badge bg-success">활성</span>
+                              <% when 'inactive' %>
+                                <span class="badge bg-warning">비활성</span>
+                              <% when 'suspended' %>
+                                <span class="badge bg-danger">정지</span>
+                              <% end %>
+                            </td>
+                            <td>
+                              <small class="text-muted">
+                                <%= user.created_at.strftime("%Y-%m-%d") %>
+                                <br>
+                                <small class="text-muted">(<%= user.days_since_signup %>일 전)</small>
+                              </small>
+                            </td>
+                            <td>
+                              <%= link_to admin_user_path(user), class: "btn btn-sm btn-outline-primary" do %>
+                                <i class="fas fa-eye"></i>
+                              <% end %>
+                            </td>
+                          </tr>
+                        <% end %>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div class="card-footer bg-white border-0 text-center">
+                  <%= link_to admin_users_path, class: "btn btn-primary" do %>
+                    <i class="fas fa-users me-1"></i> 모든 사용자 보기
+                  <% end %>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- SQL 쿼리 실행 -->
-      <div class="row">
-        <div class="col-12">
-          <div class="card">
-            <div class="card-header">
-              <h5 class="mb-0">
-                <i class="fas fa-terminal"></i>
-                SQL 쿼리 실행
-              </h5>
-            </div>
-            <div class="card-body">
-              <%= link_to "쿼리 실행 페이지", admin_database_query_path, 
-                         class: "btn btn-success" %>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 수집 로그 탭 -->
-    <div class="tab-pane fade" id="logs" role="tabpanel">
-      <div class="row">
-        <div class="col-12">
-          <div class="card">
-            <div class="card-header">
-              <h5 class="mb-0">
-                <i class="fas fa-history"></i>
+            <!-- 수집 로그 탭 -->
+            <div class="tab-pane fade" id="logs" role="tabpanel">
+              <h5 class="mb-3">
+                <i class="fas fa-history text-primary me-2"></i>
                 최근 수집 로그
               </h5>
-            </div>
-            <div class="card-body">
+              
               <% if @recent_logs.any? %>
                 <div class="table-responsive">
-                  <table class="table table-hover">
-                    <thead>
+                  <table class="table table-hover align-middle">
+                    <thead class="table-light">
                       <tr>
-                        <th>시간</th>
-                        <th>지역</th>
-                        <th>타입</th>
-                        <th>상태</th>
-                        <th>수집된 비디오</th>
-                        <th>실행 시간</th>
+                        <th class="border-0">시간</th>
+                        <th class="border-0">지역</th>
+                        <th class="border-0">타입</th>
+                        <th class="border-0">상태</th>
+                        <th class="border-0">수집된 비디오</th>
+                        <th class="border-0">실행 시간</th>
                       </tr>
                     </thead>
                     <tbody>
                       <% @recent_logs.each do |log| %>
                         <tr>
                           <td>
-                            <small><%= log.started_at.strftime("%m/%d %H:%M") %></small>
+                            <div class="d-flex flex-column">
+                              <span class="fw-medium"><%= log.started_at.strftime("%m/%d") %></span>
+                              <small class="text-muted"><%= log.started_at.strftime("%H:%M") %></small>
+                            </div>
                           </td>
                           <td>
-                            <span class="badge bg-secondary"><%= log.region_code %></span>
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2">
+                              <%= log.region_code %>
+                            </span>
                           </td>
                           <td>
-                            <small><%= log.collection_type %></small>
+                            <small class="text-muted"><%= log.collection_type %></small>
                           </td>
                           <td>
                             <% case log.status %>
                             <% when 'completed' %>
-                              <span class="badge bg-success">완료</span>
+                              <span class="badge bg-success px-3 py-2">
+                                <i class="fas fa-check me-1"></i>완료
+                              </span>
                             <% when 'failed' %>
-                              <span class="badge bg-danger">실패</span>
+                              <span class="badge bg-danger px-3 py-2">
+                                <i class="fas fa-times me-1"></i>실패
+                              </span>
                             <% when 'running' %>
-                              <span class="badge bg-warning">실행중</span>
+                              <span class="badge bg-warning px-3 py-2">
+                                <i class="fas fa-spinner fa-spin me-1"></i>실행중
+                              </span>
                             <% else %>
-                              <span class="badge bg-secondary">대기중</span>
+                              <span class="badge bg-secondary px-3 py-2">
+                                <i class="fas fa-clock me-1"></i>대기중
+                              </span>
                             <% end %>
                           </td>
                           <td>
                             <% if log.respond_to?(:completed?) && log.completed? %>
-                              <strong><%= log.videos_collected %></strong>개
+                              <strong class="text-primary"><%= log.videos_collected %></strong>
+                              <small class="text-muted">개</small>
                             <% else %>
-                              -
+                              <span class="text-muted">-</span>
                             <% end %>
                           </td>
                           <td>
-                            <small>
-                              <% if log.respond_to?(:completed?) && log.completed? && log.started_at && log.completed_at %>
+                            <% if log.respond_to?(:completed?) && log.completed? && log.started_at && log.completed_at %>
+                              <span class="text-success fw-medium">
                                 <%= ((log.completed_at - log.started_at).round(1)) %>초
-                              <% else %>
-                                -
-                              <% end %>
-                            </small>
+                              </span>
+                            <% else %>
+                              <span class="text-muted">-</span>
+                            <% end %>
                           </td>
                         </tr>
                       <% end %>
@@ -301,9 +504,12 @@
                   </table>
                 </div>
               <% else %>
-                <div class="text-center py-4">
-                  <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                  <p class="text-muted">아직 수집 로그가 없습니다.</p>
+                <div class="text-center py-5">
+                  <div class="icon-shape bg-light text-muted rounded-circle mx-auto mb-3" style="width: 4rem; height: 4rem;">
+                    <i class="fas fa-inbox fa-2x"></i>
+                  </div>
+                  <h6 class="text-muted">아직 수집 로그가 없습니다</h6>
+                  <p class="text-muted small mb-0">데이터 수집이 시작되면 여기에 로그가 표시됩니다.</p>
                 </div>
               <% end %>
             </div>
@@ -313,28 +519,37 @@
     </div>
   </div>
 
-  <!-- 실패한 수집 작업 -->
+  <!-- 실패한 수집 작업 알림 -->
   <% if @failed_collections.any? %>
     <div class="row mt-4">
       <div class="col-12">
-        <div class="card border-danger">
-          <div class="card-header bg-danger text-white">
-            <h5 class="mb-0">
-              <i class="fas fa-exclamation-circle"></i>
-              최근 실패한 수집 작업
-            </h5>
-          </div>
-          <div class="card-body">
-            <% @failed_collections.each do |log| %>
-              <div class="alert alert-danger" role="alert">
-                <strong><%= log.region_code %></strong> 지역 수집 실패 
-                (<%= log.started_at.strftime("%m/%d %H:%M") %>)
+        <div class="alert alert-danger border-0 shadow-sm" role="alert">
+          <h6 class="alert-heading mb-3">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            최근 실패한 수집 작업
+          </h6>
+          <% @failed_collections.each do |log| %>
+            <div class="d-flex align-items-start mb-2">
+              <div class="flex-shrink-0 me-3">
+                <i class="fas fa-times-circle text-danger"></i>
+              </div>
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <strong><%= log.region_code %></strong> 지역 수집 실패
+                    <div class="text-muted small">
+                      <%= log.started_at.strftime("%m/%d %H:%M") %>
+                    </div>
+                  </div>
+                </div>
                 <% if log.respond_to?(:error_message) && log.error_message.present? %>
-                  <br><small><%= truncate(log.error_message, length: 100) %></small>
+                  <small class="text-muted d-block mt-1">
+                    <%= truncate(log.error_message, length: 100) %>
+                  </small>
                 <% end %>
               </div>
-            <% end %>
-          </div>
+            </div>
+          <% end %>
         </div>
       </div>
     </div>
@@ -343,17 +558,71 @@
 
 <% content_for :head do %>
 <style>
-  .nav-tabs .nav-link {
+  .icon-shape {
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .nav-pills .nav-link {
+    border-radius: 0.5rem;
+    transition: all 0.15s ease-in-out;
     color: #6c757d;
+    background: transparent;
   }
-  .nav-tabs .nav-link.active {
-    background-color: #007bff;
-    border-color: #007bff;
+  
+  .nav-pills .nav-link.active {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
     color: white;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
   }
+  
+  .nav-pills .nav-link:hover:not(.active) {
+    background-color: rgba(0, 123, 255, 0.1);
+    color: #007bff;
+  }
+  
   .card {
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 0.75rem;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .card:hover {
+    transform: translateY(-2px);
+  }
+  
+  .btn {
+    border-radius: 0.5rem;
+    transition: all 0.15s ease-in-out;
+  }
+  
+  .table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+  }
+  
+  .badge {
+    font-weight: 500;
+    letter-spacing: 0.25px;
+  }
+  
+  .alert {
+    border-radius: 0.75rem;
+  }
+
+  @media (max-width: 768px) {
+    .nav-pills .nav-link {
+      padding: 0.75rem 0.5rem !important;
+    }
+    
+    .icon-shape {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
   }
 </style>
 <% end %>

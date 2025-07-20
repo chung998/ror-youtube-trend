@@ -1,5 +1,4 @@
 Rails.application.routes.draw do
-  mount RailsAdmin::Engine => '/admin', as: 'rails_admin'
   # devise_for :admin_users  # 개발 단계에서 비활성화
   namespace :api do
     namespace :v1 do
@@ -9,6 +8,16 @@ Rails.application.routes.draw do
     end
   end
   root 'trending#index'
+  
+  # 인증 관련 라우트
+  get    '/login',  to: 'sessions#new'
+  post   '/login',  to: 'sessions#create'
+  delete '/logout', to: 'sessions#destroy'
+  get    '/logout', to: 'sessions#destroy'  # GET 방식 로그아웃도 지원
+  
+  get    '/signup', to: 'users#new'
+  post   '/signup', to: 'users#create'
+  get    '/profile', to: 'users#show'
   
   # 트렌드 데이터
   get 'trending', to: 'trending#index'
@@ -40,6 +49,16 @@ Rails.application.routes.draw do
     get 'database/table', to: 'admin#database_table'
     get 'database/query', to: 'admin#database_query'
     post 'collect_now', to: 'admin#collect_now'
+    post 'collect_all', to: 'admin#collect_all'
+    
+    # 사용자 관리
+    resources :users do
+      member do
+        patch :toggle_role
+        patch :toggle_status  
+        patch :suspend
+      end
+    end
   end
   
   # DB 관리 도구 (개발용)

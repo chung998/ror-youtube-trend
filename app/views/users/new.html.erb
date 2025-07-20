@@ -1,0 +1,129 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card shadow">
+        <div class="card-header bg-success text-white text-center">
+          <h4 class="mb-0">
+            <i class="fas fa-user-plus me-2"></i>회원가입
+          </h4>
+        </div>
+        <div class="card-body p-4">
+          <%= form_with model: @user, url: signup_path, local: true, class: "needs-validation", novalidate: true do |form| %>
+            
+            <% if @user.errors.any? %>
+              <div class="alert alert-danger">
+                <h6 class="alert-heading">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  <%= pluralize(@user.errors.count, "개의 오류") %>가 발생했습니다:
+                </h6>
+                <ul class="mb-0">
+                  <% @user.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="mb-3">
+              <%= form.label :name, "이름", class: "form-label fw-bold" %>
+              <%= form.text_field :name, 
+                    class: "form-control #{'is-invalid' if @user.errors[:name].any?}", 
+                    placeholder: "이름을 입력하세요",
+                    required: true,
+                    autofocus: true %>
+              <div class="invalid-feedback">
+                이름을 입력해주세요.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :email, "이메일", class: "form-label fw-bold" %>
+              <%= form.email_field :email, 
+                    class: "form-control #{'is-invalid' if @user.errors[:email].any?}", 
+                    placeholder: "이메일을 입력하세요",
+                    required: true %>
+              <div class="invalid-feedback">
+                올바른 이메일을 입력해주세요.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :password, "비밀번호", class: "form-label fw-bold" %>
+              <%= form.password_field :password, 
+                    class: "form-control #{'is-invalid' if @user.errors[:password].any?}", 
+                    placeholder: "비밀번호를 입력하세요 (최소 6자)",
+                    required: true,
+                    minlength: 6 %>
+              <div class="invalid-feedback">
+                비밀번호는 최소 6자 이상이어야 합니다.
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <%= form.label :password_confirmation, "비밀번호 확인", class: "form-label fw-bold" %>
+              <%= form.password_field :password_confirmation, 
+                    class: "form-control #{'is-invalid' if @user.errors[:password_confirmation].any?}", 
+                    placeholder: "비밀번호를 다시 입력하세요",
+                    required: true %>
+              <div class="invalid-feedback">
+                비밀번호 확인이 일치하지 않습니다.
+              </div>
+            </div>
+
+            <div class="d-grid">
+              <%= form.submit "회원가입", class: "btn btn-success btn-lg" %>
+            </div>
+          <% end %>
+        </div>
+        <div class="card-footer text-center bg-light">
+          <p class="mb-0">
+            이미 계정이 있으신가요? 
+            <%= link_to "로그인", login_path, class: "text-decoration-none fw-bold" %>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Bootstrap 유효성 검사 및 비밀번호 확인
+(function() {
+  'use strict';
+  
+  // 비밀번호 확인 검증
+  function validatePasswordConfirmation() {
+    const password = document.getElementById('user_password');
+    const passwordConfirmation = document.getElementById('user_password_confirmation');
+    
+    if (password && passwordConfirmation) {
+      function checkPasswords() {
+        if (passwordConfirmation.value !== password.value) {
+          passwordConfirmation.setCustomValidity('비밀번호가 일치하지 않습니다.');
+        } else {
+          passwordConfirmation.setCustomValidity('');
+        }
+      }
+      
+      password.addEventListener('input', checkPasswords);
+      passwordConfirmation.addEventListener('input', checkPasswords);
+    }
+  }
+  
+  // Bootstrap 유효성 검사
+  window.addEventListener('load', function() {
+    validatePasswordConfirmation();
+    
+    var forms = document.getElementsByClassName('needs-validation');
+    var validation = Array.prototype.filter.call(forms, function(form) {
+      form.addEventListener('submit', function(event) {
+        if (form.checkValidity() === false) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+    });
+  }, false);
+})();
+</script>

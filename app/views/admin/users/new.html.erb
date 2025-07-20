@@ -1,0 +1,229 @@
+<% content_for :title, "새 사용자 추가 - YouTube 트렌드 관리자" %>
+
+<div class="container-fluid py-4">
+  <!-- 헤더 -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 class="h2 mb-1">
+            <i class="fas fa-user-plus text-success me-2"></i>
+            새 사용자 추가
+          </h1>
+          <p class="text-muted mb-0">시스템에 새로운 사용자를 추가합니다</p>
+        </div>
+        <div>
+          <%= link_to admin_users_path, class: "btn btn-outline-secondary" do %>
+            <i class="fas fa-arrow-left me-1"></i> 사용자 목록으로
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0">
+          <h6 class="mb-0">
+            <i class="fas fa-info-circle me-2"></i>
+            사용자 정보 입력
+          </h6>
+        </div>
+        
+        <div class="card-body p-4">
+          <%= form_with model: [@admin, @user], url: admin_users_path, local: true, class: "needs-validation", novalidate: true do |form| %>
+            
+            <% if @user.errors.any? %>
+              <div class="alert alert-danger">
+                <h6 class="alert-heading">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  <%= pluralize(@user.errors.count, "개의 오류") %>가 발생했습니다:
+                </h6>
+                <ul class="mb-0">
+                  <% @user.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="row">
+              <!-- 기본 정보 -->
+              <div class="col-lg-6">
+                <h6 class="text-primary mb-3">
+                  <i class="fas fa-user me-2"></i>기본 정보
+                </h6>
+                
+                <div class="mb-3">
+                  <%= form.label :name, "이름", class: "form-label fw-bold" %>
+                  <%= form.text_field :name, 
+                        class: "form-control #{'is-invalid' if @user.errors[:name].any?}", 
+                        placeholder: "사용자의 실명을 입력하세요",
+                        required: true,
+                        autofocus: true %>
+                  <div class="invalid-feedback">
+                    이름을 입력해주세요 (2-50자).
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <%= form.label :email, "이메일", class: "form-label fw-bold" %>
+                  <%= form.email_field :email, 
+                        class: "form-control #{'is-invalid' if @user.errors[:email].any?}", 
+                        placeholder: "example@domain.com",
+                        required: true %>
+                  <div class="invalid-feedback">
+                    올바른 이메일 주소를 입력해주세요.
+                  </div>
+                </div>
+              </div>
+              
+              <!-- 계정 설정 -->
+              <div class="col-lg-6">
+                <h6 class="text-primary mb-3">
+                  <i class="fas fa-cogs me-2"></i>계정 설정
+                </h6>
+                
+                <div class="mb-3">
+                  <%= form.label :role, "권한", class: "form-label fw-bold" %>
+                  <%= form.select :role, 
+                        options_for_select([
+                          ['일반사용자', 'user'],
+                          ['관리자', 'admin']
+                        ], @user.role || 'user'), 
+                        {}, 
+                        { class: "form-select #{'is-invalid' if @user.errors[:role].any?}" } %>
+                  <div class="form-text">
+                    관리자는 모든 관리 기능에 접근할 수 있습니다.
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <%= form.label :status, "계정 상태", class: "form-label fw-bold" %>
+                  <%= form.select :status, 
+                        options_for_select([
+                          ['활성', 'active'],
+                          ['비활성', 'inactive'],
+                          ['정지', 'suspended']
+                        ], @user.status || 'active'), 
+                        {}, 
+                        { class: "form-select #{'is-invalid' if @user.errors[:status].any?}" } %>
+                  <div class="form-text">
+                    비활성 또는 정지 상태의 사용자는 로그인할 수 없습니다.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- 비밀번호 설정 -->
+            <div class="row">
+              <div class="col-12">
+                <h6 class="text-primary mb-3">
+                  <i class="fas fa-lock me-2"></i>비밀번호 설정
+                </h6>
+              </div>
+              
+              <div class="col-lg-6">
+                <div class="mb-3">
+                  <%= form.label :password, "비밀번호", class: "form-label fw-bold" %>
+                  <%= form.password_field :password, 
+                        class: "form-control #{'is-invalid' if @user.errors[:password].any?}", 
+                        placeholder: "비밀번호를 입력하세요 (최소 6자)",
+                        required: true,
+                        minlength: 6 %>
+                  <div class="invalid-feedback">
+                    비밀번호는 최소 6자 이상이어야 합니다.
+                  </div>
+                </div>
+              </div>
+              
+              <div class="col-lg-6">
+                <div class="mb-3">
+                  <%= form.label :password_confirmation, "비밀번호 확인", class: "form-label fw-bold" %>
+                  <%= form.password_field :password_confirmation, 
+                        class: "form-control #{'is-invalid' if @user.errors[:password_confirmation].any?}", 
+                        placeholder: "비밀번호를 다시 입력하세요",
+                        required: true %>
+                  <div class="invalid-feedback">
+                    비밀번호 확인이 일치하지 않습니다.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- 알림 -->
+            <div class="alert alert-info border-0">
+              <h6 class="alert-heading">
+                <i class="fas fa-lightbulb me-2"></i>안내사항
+              </h6>
+              <ul class="mb-0">
+                <li>생성된 사용자는 이메일과 비밀번호로 로그인할 수 있습니다.</li>
+                <li>관리자 권한 사용자는 모든 관리 기능에 접근 가능합니다.</li>
+                <li>비활성/정지 상태의 계정은 나중에 관리자가 활성화할 수 있습니다.</li>
+                <li>사용자 정보는 생성 후에도 편집할 수 있습니다.</li>
+              </ul>
+            </div>
+
+            <!-- 버튼 -->
+            <div class="d-flex justify-content-end gap-2">
+              <%= link_to admin_users_path, class: "btn btn-outline-secondary" do %>
+                <i class="fas fa-times me-1"></i> 취소
+              <% end %>
+              <%= form.submit "사용자 생성", class: "btn btn-success" do %>
+                <i class="fas fa-plus me-1"></i> 사용자 생성
+              <% end %>
+            </div>
+
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Bootstrap 유효성 검사 및 비밀번호 확인
+(function() {
+  'use strict';
+  
+  // 비밀번호 확인 검증
+  function validatePasswordConfirmation() {
+    const password = document.getElementById('user_password');
+    const passwordConfirmation = document.getElementById('user_password_confirmation');
+    
+    if (password && passwordConfirmation) {
+      function checkPasswords() {
+        if (passwordConfirmation.value !== password.value) {
+          passwordConfirmation.setCustomValidity('비밀번호가 일치하지 않습니다.');
+        } else {
+          passwordConfirmation.setCustomValidity('');
+        }
+      }
+      
+      password.addEventListener('input', checkPasswords);
+      passwordConfirmation.addEventListener('input', checkPasswords);
+    }
+  }
+  
+  // Bootstrap 유효성 검사
+  window.addEventListener('load', function() {
+    validatePasswordConfirmation();
+    
+    var forms = document.getElementsByClassName('needs-validation');
+    var validation = Array.prototype.filter.call(forms, function(form) {
+      form.addEventListener('submit', function(event) {
+        if (form.checkValidity() === false) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+      }, false);
+    });
+  }, false);
+})();
+</script> 

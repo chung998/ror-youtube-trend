@@ -51,8 +51,6 @@ gem "dotenv-rails"
 # gem "bootstrap", "~> 5.3"
 # gem "sassc-rails"
 
-# Rails Admin for admin interface (인증 없이 사용)
-gem "rails_admin"
 # gem "devise" # 개발 단계에서 비활성화
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]

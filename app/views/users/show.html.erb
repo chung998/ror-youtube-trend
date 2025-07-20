@@ -1,0 +1,77 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-info text-white text-center">
+          <h4 class="mb-0">
+            <i class="fas fa-user me-2"></i>사용자 프로필
+          </h4>
+        </div>
+        <div class="card-body p-4">
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label fw-bold text-muted">이름</label>
+                <p class="h5"><%= @user.name %></p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold text-muted">이메일</label>
+                <p class="h6"><%= @user.email %></p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold text-muted">권한</label>
+                <p>
+                  <% if @user.admin? %>
+                    <span class="badge bg-danger fs-6">
+                      <i class="fas fa-crown me-1"></i>관리자
+                    </span>
+                  <% else %>
+                    <span class="badge bg-secondary fs-6">
+                      <i class="fas fa-user me-1"></i>일반 사용자
+                    </span>
+                  <% end %>
+                </p>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label fw-bold text-muted">가입일</label>
+                <p class="h6"><%= @user.created_at.strftime("%Y년 %m월 %d일") %></p>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label fw-bold text-muted">마지막 업데이트</label>
+                <p class="h6"><%= @user.updated_at.strftime("%Y년 %m월 %d일 %H:%M") %></p>
+              </div>
+            </div>
+          </div>
+          
+          <% if @user.admin? %>
+            <div class="alert alert-info mt-4">
+              <h6 class="alert-heading">
+                <i class="fas fa-info-circle me-2"></i>관리자 권한
+              </h6>
+              <p class="mb-0">
+                관리자로서 다음 기능에 접근할 수 있습니다:
+                검색 페이지, 관리자 대시보드, 데이터베이스 관리, 수동 데이터 수집
+              </p>
+            </div>
+          <% end %>
+        </div>
+        
+        <div class="card-footer text-center bg-light">
+          <div class="btn-group" role="group">
+            <%= link_to "홈으로", root_path, class: "btn btn-outline-primary" %>
+            <% if @user.admin? %>
+              <%= link_to "관리자 페이지", admin_root_path, class: "btn btn-outline-warning" %>
+              <%= link_to "검색", search_path, class: "btn btn-outline-info" %>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

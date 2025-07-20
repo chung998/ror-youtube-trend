@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_20_132421) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_20_190000) do
   create_table "collection_logs", force: :cascade do |t|
     t.string "region_code", limit: 2, null: false
     t.string "collection_type", default: "all", null: false
@@ -64,11 +64,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_20_132421) do
   end
 
   create_table "users", force: :cascade do |t|
-    t.string "email_address", null: false
+    t.string "email", null: false
     t.string "password_digest", null: false
+    t.string "role", default: "user"
+    t.string "name", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.string "status", default: "active"
+    t.datetime "last_login_at"
+    t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["last_login_at"], name: "index_users_on_last_login_at"
+    t.index ["status"], name: "index_users_on_status"
   end
 
   add_foreign_key "sessions", "users"
