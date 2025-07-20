@@ -2,7 +2,7 @@ class TrendingVideo < ApplicationRecord
   # 사용자별 분리 제거 - 단일 테이블로 관리
   
   validates :video_id, presence: true, uniqueness: { scope: [:region_code, :collection_date] }
-  validates :region_code, inclusion: { in: %w[KR US JP GB DE FR] }
+  validates :region_code, inclusion: { in: %w[KR US JP GB DE FR VN ID] }
   validates :title, presence: true
   validates :channel_title, presence: true
   validates :channel_id, presence: true

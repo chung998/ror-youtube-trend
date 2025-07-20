@@ -9,25 +9,26 @@ class YoutubeDataService
     @service.key = YOUTUBE_API_KEY
   end
   
-  # 메인 데이터 수집 메서드
+  # 메인 데이터 수집 메서드 (trending API만 사용)
   def fetch_trending_videos(region_code, type = 'all', max_results = 50)
+    # trending API만 사용 (복잡한 search API 쇼츠 수집 로직 제거)
+    videos = fetch_regular_videos(region_code, max_results)
+    
+    # 타입별 필터링
     case type
     when 'shorts'
-      fetch_popular_shorts(region_code, max_results)
+      videos.select { |video| video[:is_shorts] }
     when 'videos'
-      fetch_regular_videos(region_code, max_results)
+      videos.reject { |video| video[:is_shorts] }
     else
-      # 'all'인 경우 일반 비디오와 쇼츠를 따로 수집해서 합침
-      regular_videos = fetch_regular_videos(region_code, max_results / 2)
-      shorts_videos = fetch_popular_shorts(region_code, max_results / 2)
-      regular_videos + shorts_videos
+      videos # 'all'인 경우 쇼츠와 일반 영상 모두 포함
     end
   end
   
   private
   
-  # 일반 비디오 수집 (trending API 사용)
-  def fetch_regular_videos(region_code, max_results = 25)
+  # trending API로 인기 비디오 수집 (쇼츠+일반 영상 모두 포함)
+  def fetch_regular_videos(region_code, max_results = 50)
     begin
       response = @service.list_videos(
         'snippet,statistics,contentDetails',
@@ -38,8 +39,9 @@ class YoutubeDataService
       )
       
       videos = response.items.map { |item| parse_video_data(item) }
-      # 일반 비디오만 필터링 (60초 초과)
-      videos.reject { |video| video[:is_shorts] }
+      
+      Rails.logger.info "#{region_code} 지역: 총 #{videos.length}개 수집 (쇼츠 #{videos.count { |v| v[:is_shorts] }}개 포함)"
+      videos
       
     rescue Google::Apis::Error => e
       Rails.logger.error "YouTube trending API 에러: #{e.message}"
@@ -47,57 +49,10 @@ class YoutubeDataService
     end
   end
   
-  # 쇼츠 수집 (search API 사용)
-  def fetch_popular_shorts(region_code, max_results = 25)
-    shorts_results = []
-    one_week_ago = 1.week.ago
-    
-    # 여러 키워드로 검색해서 다양한 쇼츠 수집
-    search_keywords = get_shorts_keywords_for_region(region_code)
-    
-    # 단순 검색으로 조회수 순 10개만 가져오기
-    begin
-      search_response = @service.list_searches(
-        'snippet',
-        q: 'a', # 가장 일반적인 문자
-        type: 'video',
-        order: 'viewCount', # 조회수 순으로 정렬
-        region_code: region_code,
-        video_duration: 'short', # 4분 이하 (쇼츠)
-        max_results: 10, # 10개만 가져오기
-        relevance_language: get_language_for_region(region_code)
-      )
-        
-        if search_response.items.any?
-          video_ids = search_response.items.map(&:id).map(&:video_id)
-          
-          # 비디오 세부정보 가져오기
-          details_response = @service.list_videos(
-            'snippet,statistics,contentDetails',
-            id: video_ids.join(',')
-          )
-          
-          shorts_candidates = details_response.items.map { |item| parse_video_data(item) }
-          
-          # 1. 실제 쇼츠만 필터링 (60초 이하)
-          # 2. 최근 1주일간 게시된 것만 필터링
-          recent_shorts = shorts_candidates.select do |video| 
-            video[:is_shorts] && 
-            video[:published_at] && 
-            Time.parse(video[:published_at].to_s) >= one_week_ago
-          end
-          
-          shorts_results.concat(recent_shorts)
-        end
-        
-      rescue Google::Apis::Error => e
-        Rails.logger.warn "YouTube search API에서 쇼츠 수집 실패: #{e.message}"
-      end
-    
-    # 조회수순으로 이미 정렬되어 있으므로 그대로 반환
-    shorts_results.uniq { |video| video[:video_id] }
-                  .first(max_results)
-  end
+  # 쇼츠 수집 기능 제거 (일반 인기 영상만 수집)
+  # def fetch_popular_shorts(region_code, max_results = 25)
+  #   # 쇼츠 수집 로직 제거됨 - 일반 인기 영상만 수집하도록 변경
+  # end
   
   # API 응답 데이터를 모델 형식으로 변환
   def parse_video_data(item)
@@ -148,10 +103,8 @@ class YoutubeDataService
     end
   end
   
-  # 지역별 쇼츠 검색 키워드 설정 (매우 일반적인 키워드 사용)
-  def get_shorts_keywords_for_region(region_code)
-    # 모든 지역에서 공통으로 사용할 수 있는 매우 일반적인 키워드들
-    # 띄어쓰기나 모든 제목에 들어갈 수 있는 단어들 사용
-    [' ', 'a', 'the', 'and', 'in', 'to']
-  end
+  # 쇼츠 관련 메서드 제거 (더 이상 사용하지 않음)
+  # def get_shorts_keywords_for_region(region_code)
+  #   # 쇼츠 수집 기능 제거로 인해 더 이상 사용하지 않음
+  # end
 end

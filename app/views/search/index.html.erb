@@ -8,7 +8,7 @@
         <i class="fab fa-youtube text-danger"></i>
         YouTube 동영상 검색
       </h1>
-      <p class="text-muted">키워드, 지역, 길이, 발행 날짜 등 다양한 필터로 검색할 수 있습니다</p>
+      <p class="text-muted">키워드, 지역, 길이, 발행 날짜 등 다양한 필터로 검색하고 결과를 정렬할 수 있습니다</p>
     </div>
   </div>
 
@@ -23,9 +23,9 @@
           </h5>
         </div>
         <div class="card-body">
-          <%= form_with url: search_results_path, method: :get, local: true, class: "row g-3" do |f| %>
+          <%= form_with url: search_results_path, method: :get, local: true, class: "row g-3", id: "search-form" do |f| %>
             <!-- 검색 키워드 -->
-            <div class="col-md-6">
+            <div class="col-md-3">
               <label for="search_query" class="form-label">검색 키워드</label>
               <%= f.text_field :q, value: @query, 
                               class: "form-control", 
@@ -34,7 +34,7 @@
             </div>
 
             <!-- 지역 선택 -->
-            <div class="col-md-3">
+            <div class="col-md-2">
               <label for="search_region" class="form-label">지역</label>
               <%= f.select :region, 
                           options_for_select(YoutubeSearchService.region_options, @region),
@@ -43,7 +43,7 @@
             </div>
 
             <!-- 동영상 길이 -->
-            <div class="col-md-3">
+            <div class="col-md-2">
               <label for="search_duration" class="form-label">동영상 길이</label>
               <%= f.select :duration, 
                           options_for_select(YoutubeSearchService.duration_options, @duration),
@@ -51,13 +51,31 @@
                           { class: "form-select", id: "search_duration" } %>
             </div>
 
-            <!-- 정렬 순서 -->
-            <div class="col-md-3">
-              <label for="search_order" class="form-label">정렬 순서</label>
+            <!-- YouTube API 정렬 -->
+            <div class="col-md-2">
+              <label for="search_order" class="form-label">YouTube 정렬</label>
               <%= f.select :order, 
                           options_for_select(YoutubeSearchService.order_options, @order),
                           {}, 
                           { class: "form-select", id: "search_order" } %>
+            </div>
+
+            <!-- 최대 결과 수 -->
+            <div class="col-md-2">
+              <label for="search_max_results" class="form-label">최대 개수</label>
+              <%= f.select :max_results, 
+                          options_for_select([
+                            ['10개', 10],
+                            ['25개 (기본)', 25],
+                            ['50개 (최대)', 50]
+                          ], @max_results || 25),
+                          {}, 
+                          { class: "form-select", id: "search_max_results" } %>
+            </div>
+
+            <!-- 검색 버튼 -->
+            <div class="col-md-1 d-flex align-items-end">
+              <%= f.submit "검색", class: "btn btn-primary" %>
             </div>
 
             <!-- 발행 날짜 시작 -->
@@ -78,13 +96,14 @@
                               id: "search_published_before" %>
             </div>
 
-            <!-- 검색 버튼 -->
-            <div class="col-md-3 d-flex align-items-end">
-              <%= f.submit "검색", class: "btn btn-primary w-100" %>
+            <!-- 초기화 버튼 -->
+            <div class="col-md-6 d-flex align-items-end">
+              <%= link_to "초기화", search_path, class: "btn btn-outline-secondary" %>
             </div>
 
-            <!-- 페이지 토큰 (숨김) -->
+            <!-- 숨김 필드 -->
             <%= f.hidden_field :page_token, value: params[:page_token] %>
+            <%= f.hidden_field :sort, value: @sort, id: "hidden_sort" %>
           <% end %>
         </div>
       </div>
@@ -108,16 +127,31 @@
     <div class="row mb-4">
       <div class="col-12">
         <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-              <i class="fas fa-list"></i>
-              검색 결과
-              <% if @search_results[:total_results] %>
-                <span class="badge bg-secondary">
-                  <%= number_with_delimiter(@search_results[:total_results]) %>개
-                </span>
-              <% end %>
-            </h5>
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+            <div class="d-flex align-items-center flex-wrap gap-3">
+              <h5 class="mb-0">
+                <i class="fas fa-list"></i>
+                검색 결과
+                <% if @search_results[:total_results] %>
+                  <small class="text-muted ms-2">
+                    현재 페이지: <strong><%= @search_results[:items].length %>개</strong> / 
+                    전체: <span class="badge bg-secondary"><%= number_with_delimiter(@search_results[:total_results]) %>개</span>
+                  </small>
+                <% end %>
+              </h5>
+              
+              <!-- 실시간 정렬 옵션 -->
+              <div class="d-flex align-items-center gap-2">
+                <label for="live_sort" class="form-label mb-0 small">정렬:</label>
+                <select id="live_sort" class="form-select form-select-sm" style="width: auto;">
+                  <% YoutubeSearchService.sort_options.each do |option| %>
+                    <option value="<%= option[1] %>" <%= 'selected' if @sort == option[1] %>>
+                      <%= option[0] %>
+                    </option>
+                  <% end %>
+                </select>
+              </div>
+            </div>
             
             <!-- 페이지네이션 (상단) -->
             <% if @search_results[:next_page_token] || @search_results[:prev_page_token] %>
@@ -129,6 +163,8 @@
                                region: @region, 
                                duration: @duration, 
                                order: @order,
+                               sort: @sort,
+                               max_results: @max_results,
                                published_after: params[:published_after],
                                published_before: params[:published_before],
                                page_token: @search_results[:prev_page_token]
@@ -143,6 +179,8 @@
                                region: @region, 
                                duration: @duration, 
                                order: @order,
+                               sort: @sort,
+                               max_results: @max_results,
                                published_after: params[:published_after],
                                published_before: params[:published_before],
                                page_token: @search_results[:next_page_token]
@@ -155,21 +193,44 @@
           
           <div class="card-body">
             <% if @search_results[:items].any? %>
-              <div class="row">
-                <% @search_results[:items].each do |video| %>
-                  <div class="col-md-6 col-lg-4 mb-4">
+              <div class="videos-grid" id="videos-container">
+                <% @search_results[:items].each_with_index do |video, index| %>
+                  <div class="video-item" 
+                       data-view-count="<%= video[:view_count] %>"
+                       data-like-count="<%= video[:like_count] %>"
+                       data-comment-count="<%= video[:comment_count] %>"
+                       data-published-at="<%= video[:published_at].to_i %>"
+                       data-duration-seconds="<%= video[:duration_seconds] %>"
+                       data-title="<%= video[:title].downcase %>"
+                       data-original-index="<%= index %>">
                     <div class="card h-100 video-card">
                       <!-- 썸네일 -->
                       <div class="position-relative">
-                        <%= link_to video[:watch_url], target: "_blank", class: "text-decoration-none" do %>
+                        <div class="video-thumbnail-container" 
+                             data-bs-toggle="modal" 
+                             data-bs-target="#youtubeModal"
+                             data-video-id="<%= video[:video_id] %>"
+                             data-video-title="<%= video[:title] %>"
+                             style="cursor: pointer;">
                           <%= image_tag video[:thumbnail_url], 
                                        class: "card-img-top video-thumbnail", 
                                        alt: video[:title],
                                        loading: "lazy" %>
+                          <!-- 재생 버튼 오버레이 -->
+                          <div class="play-button-overlay">
+                            <i class="fas fa-play-circle"></i>
+                          </div>
+                        </div>
+                        
+                        <!-- 지속시간 배지 -->
+                        <% if video[:duration_seconds] && video[:duration_seconds] > 0 %>
+                          <span class="duration-badge">
+                            <%= YoutubeSearchService.format_duration(video[:duration_seconds]) %>
+                          </span>
                         <% end %>
                         
-                        <!-- Shorts 배지 (duration이 short인 경우) -->
-                        <% if @duration == 'short' %>
+                        <!-- Shorts 배지 -->
+                        <% if video[:duration_seconds] && video[:duration_seconds] <= 60 %>
                           <span class="shorts-badge">Shorts</span>
                         <% end %>
                       </div>
@@ -182,10 +243,37 @@
                           <% end %>
                         </h6>
                         
-                        <p class="card-text text-muted small">
+                        <p class="card-text text-muted small mb-2">
                           <i class="fas fa-user"></i>
                           <%= video[:channel_title] %>
                         </p>
+                        
+                        <!-- 통계 정보 -->
+                        <div class="video-stats mb-2">
+                          <div class="row text-center">
+                            <div class="col-4">
+                              <small class="text-muted">
+                                <i class="fas fa-eye text-primary"></i><br>
+                                <strong><%= YoutubeSearchService.format_view_count(video[:view_count]) %></strong><br>
+                                <span class="tiny-text">조회수</span>
+                              </small>
+                            </div>
+                            <div class="col-4">
+                              <small class="text-muted">
+                                <i class="fas fa-thumbs-up text-success"></i><br>
+                                <strong><%= number_with_delimiter(video[:like_count]) %></strong><br>
+                                <span class="tiny-text">좋아요</span>
+                              </small>
+                            </div>
+                            <div class="col-4">
+                              <small class="text-muted">
+                                <i class="fas fa-comment text-warning"></i><br>
+                                <strong><%= number_with_delimiter(video[:comment_count]) %></strong><br>
+                                <span class="tiny-text">댓글</span>
+                              </small>
+                            </div>
+                          </div>
+                        </div>
                         
                         <p class="card-text">
                           <small class="text-muted">
@@ -219,6 +307,8 @@
                                  region: @region, 
                                  duration: @duration, 
                                  order: @order,
+                                 sort: @sort,
+                                 max_results: @max_results,
                                  published_after: @published_after,
                                  published_before: @published_before,
                                  page_token: @search_results[:prev_page_token]
@@ -233,6 +323,8 @@
                                  region: @region, 
                                  duration: @duration, 
                                  order: @order,
+                                 sort: @sort,
+                                 max_results: @max_results,
                                  published_after: @published_after,
                                  published_before: @published_before,
                                  page_token: @search_results[:next_page_token]
@@ -290,6 +382,38 @@
   <% end %>
 </div>
 
+<!-- YouTube 플레이어 모달 -->
+<div class="modal fade" id="youtubeModal" tabindex="-1" aria-labelledby="youtubeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="youtubeModalLabel">YouTube 동영상</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="youtube-player-container">
+          <iframe id="youtubePlayer" 
+                  width="100%" 
+                  height="100%" 
+                  src="" 
+                  title="YouTube video player" 
+                  frameborder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                  referrerpolicy="strict-origin-when-cross-origin" 
+                  allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a id="youtubeExternalLink" href="#" target="_blank" class="btn btn-danger">
+          <i class="fab fa-youtube"></i> YouTube에서 보기
+        </a>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <% content_for :head do %>
 <style>
   .video-card {
@@ -302,6 +426,17 @@
   .video-thumbnail {
     aspect-ratio: 16/9;
     object-fit: cover;
+  }
+  .duration-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
   }
   .shorts-badge {
     position: absolute;
@@ -317,5 +452,221 @@
   .card-title a:hover {
     color: #dc3545 !important;
   }
+  .video-stats {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 8px;
+  }
+  .tiny-text {
+    font-size: 0.65rem;
+  }
+  .video-stats .col-4 {
+    border-right: 1px solid #dee2e6;
+  }
+  .video-stats .col-4:last-child {
+    border-right: none;
+  }
+  
+  /* 5열 그리드 레이아웃 */
+  .videos-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+  }
+  
+  /* 반응형 그리드 */
+  @media (max-width: 1400px) {
+    .videos-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  @media (max-width: 1200px) {
+    .videos-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .videos-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .videos-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* 썸네일 호버 효과 및 재생 버튼 */
+  .video-thumbnail-container {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .video-thumbnail-container:hover .video-thumbnail {
+    transform: scale(1.05);
+  }
+  
+  .play-button-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+    pointer-events: none;
+  }
+  
+  .video-thumbnail-container:hover .play-button-overlay {
+    color: #ff0000;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  
+  /* YouTube 플레이어 모달 */
+  .youtube-player-container {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 비율 */
+    background: #000;
+  }
+  
+  .youtube-player-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* 모달 크기 조정 */
+  @media (max-width: 1200px) {
+    .modal-xl {
+      max-width: 90%;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .modal-xl {
+      max-width: 95%;
+      margin: 1rem;
+    }
+    
+    .youtube-player-container {
+      padding-bottom: 75%; /* 모바일에서 좀 더 높은 비율 */
+    }
+  }
+  
+  /* 정렬 애니메이션 */
+  .video-item {
+    transition: all 0.3s ease;
+  }
+  
+  .sorting {
+    opacity: 0.7;
+  }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const liveSortSelect = document.getElementById('live_sort');
+  const hiddenSortField = document.getElementById('hidden_sort');
+  const videosContainer = document.getElementById('videos-container');
+  
+  // 정렬 기능
+  if (liveSortSelect && videosContainer) {
+    liveSortSelect.addEventListener('change', function() {
+      const sortValue = this.value;
+      
+      // 정렬 시작 표시
+      videosContainer.classList.add('sorting');
+      
+      // 숨김 필드 업데이트
+      if (hiddenSortField) {
+        hiddenSortField.value = sortValue;
+      }
+      
+      // 비디오 아이템들 가져오기
+      const videoItems = Array.from(videosContainer.querySelectorAll('.video-item'));
+      
+      // 정렬 함수
+      videoItems.sort((a, b) => {
+        switch(sortValue) {
+          case 'view_count_desc':
+            return parseInt(b.dataset.viewCount) - parseInt(a.dataset.viewCount);
+          case 'view_count_asc':
+            return parseInt(a.dataset.viewCount) - parseInt(b.dataset.viewCount);
+          case 'like_count_desc':
+            return parseInt(b.dataset.likeCount) - parseInt(a.dataset.likeCount);
+          case 'comment_count_desc':
+            return parseInt(b.dataset.commentCount) - parseInt(a.dataset.commentCount);
+          case 'published_desc':
+            return parseInt(b.dataset.publishedAt) - parseInt(a.dataset.publishedAt);
+          case 'published_asc':
+            return parseInt(a.dataset.publishedAt) - parseInt(b.dataset.publishedAt);
+          case 'duration_desc':
+            return parseInt(b.dataset.durationSeconds) - parseInt(a.dataset.durationSeconds);
+          case 'duration_asc':
+            return parseInt(a.dataset.durationSeconds) - parseInt(b.dataset.durationSeconds);
+          case 'title_asc':
+            return a.dataset.title.localeCompare(b.dataset.title);
+          case 'title_desc':
+            return b.dataset.title.localeCompare(a.dataset.title);
+          default:
+            // relevance: 원래 순서로 복원
+            return parseInt(a.dataset.originalIndex) - parseInt(b.dataset.originalIndex);
+        }
+      });
+      
+      // DOM에서 기존 아이템들 제거
+      videoItems.forEach(item => item.remove());
+      
+      // 정렬된 순서로 다시 추가
+      setTimeout(() => {
+        videoItems.forEach(item => videosContainer.appendChild(item));
+        videosContainer.classList.remove('sorting');
+      }, 100);
+    });
+  }
+  
+  // YouTube 모달 처리
+  const youtubeModal = document.getElementById('youtubeModal');
+  const youtubePlayer = document.getElementById('youtubePlayer');
+  const youtubeModalLabel = document.getElementById('youtubeModalLabel');
+  const youtubeExternalLink = document.getElementById('youtubeExternalLink');
+  
+  if (youtubeModal) {
+    // 모달이 열릴 때
+    youtubeModal.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      const videoId = button.getAttribute('data-video-id');
+      const videoTitle = button.getAttribute('data-video-title');
+      
+      if (videoId) {
+        // YouTube 플레이어 URL 생성 (autoplay, 관련 동영상 숨김, 브랜딩 최소화)
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&showinfo=0`;
+        const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        
+        // iframe src 설정
+        youtubePlayer.src = embedUrl;
+        
+        // 모달 제목 설정
+        youtubeModalLabel.textContent = videoTitle || 'YouTube 동영상';
+        
+        // 외부 링크 설정
+        youtubeExternalLink.href = watchUrl;
+      }
+    });
+    
+    // 모달이 닫힐 때 (동영상 정지)
+    youtubeModal.addEventListener('hide.bs.modal', function() {
+      youtubePlayer.src = '';
+    });
+  }
+});
+</script>
 <% end %>

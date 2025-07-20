@@ -5,7 +5,7 @@ class TrendingCollectionService
     @youtube_service = YoutubeDataService.new
   end
   
-  # 특정 국가의 모든 데이터 수집 (일반 + 쇼츠)
+  # 특정 국가의 인기 영상 수집 (trending API만 사용)
   def collect_country(region_code, date = Date.current)
     region_code = region_code.upcase
     return { success: false, error: "지원하지 않는 국가입니다" } unless SUPPORTED_REGIONS.include?(region_code)
@@ -22,12 +22,8 @@ class TrendingCollectionService
     begin
       collection_log = create_collection_log(region_code, date)
       
-      # 일반 비디오와 쇼츠를 별도로 수집
-      regular_videos = @youtube_service.fetch_trending_videos(region_code, 'videos', 25)
-      shorts_videos = @youtube_service.fetch_trending_videos(region_code, 'shorts', 25)
-      
-      # 두 유형을 합쳐서 처리
-      all_videos = regular_videos + shorts_videos
+      # trending API만 사용 (복잡한 search API 쇼츠 수집 로직 제거)
+      all_videos = @youtube_service.fetch_trending_videos(region_code, 'all', 50)
       saved_count = 0
       
       all_videos.each do |video_data|

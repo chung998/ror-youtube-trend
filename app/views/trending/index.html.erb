@@ -23,9 +23,9 @@
     </div>
   </div>
 
-  <!-- 필터 및 검색 섹션 -->
+  <!-- 필터 섹션 -->
   <div class="row mb-4">
-    <div class="col-md-3">
+    <div class="col-md-4">
       <%= form_with url: trending_path, method: :get, local: true, class: "mb-2" do |f| %>
         <label class="form-label">지역 선택</label>
         <%= f.select :region, 
@@ -45,7 +45,7 @@
       <% end %>
     </div>
     
-    <div class="col-md-3">
+    <div class="col-md-4">
       <%= form_with url: trending_path, method: :get, local: true, class: "mb-2" do |f| %>
         <label class="form-label">타입 선택</label>
         <%= f.select :type,
@@ -60,38 +60,38 @@
       <% end %>
     </div>
     
-    <div class="col-md-6">
-      <%= form_with url: search_path, method: :get, local: true, class: "mb-2" do |f| %>
-        <label class="form-label">검색</label>
-        <div class="input-group">
-          <%= f.text_field :q, placeholder: "영상 제목이나 채널명으로 검색...", 
-                           class: "form-control",
-                           value: params[:q] %>
-          <%= f.submit "검색", class: "btn btn-outline-primary" %>
-        </div>
+    <div class="col-md-4 d-flex align-items-end">
+      <%= link_to search_path, class: "btn btn-outline-primary" do %>
+        <i class="fas fa-search"></i>
+        동영상 검색하기
       <% end %>
     </div>
   </div>
 
   <!-- 비디오 그리드 -->
   <% if @videos && @videos.any? %>
-    <div class="row" id="videos-grid">
+    <div class="videos-grid" id="videos-grid">
       <% @videos.each do |video| %>
-        <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+        <div class="video-item">
           <div class="card video-card h-100 shadow-sm">
             <!-- 썸네일 -->
             <div class="position-relative">
-              <img src="<%= video.thumbnail_url %>" 
-                   class="card-img-top video-thumbnail" 
-                   alt="<%= video.title %>"
-                   loading="lazy">
-              
-              <!-- 쇼츠 배지 -->
-              <% if video.is_shorts %>
-                <span class="shorts-badge">
-                  <i class="fas fa-play"></i> Shorts
-                </span>
-              <% end %>
+              <div class="video-thumbnail-container" 
+                   data-bs-toggle="modal" 
+                   data-bs-target="#youtubeModal"
+                   data-video-id="<%= video.video_id %>"
+                   data-video-title="<%= video.title %>"
+                   style="cursor: pointer;">
+                <img src="<%= video.thumbnail_url %>" 
+                     class="card-img-top video-thumbnail" 
+                     alt="<%= video.title %>"
+                     loading="lazy">
+                
+                <!-- 재생 버튼 오버레이 -->
+                <div class="play-button-overlay">
+                  <i class="fas fa-play-circle"></i>
+                </div>
+              </div>
               
               <!-- 재생 시간 -->
               <% if video.duration %>
@@ -135,19 +135,9 @@
               </div>
               
               <!-- 업로드 시간 -->
-              <div class="text-muted small mb-3">
+              <div class="text-muted small">
                 <i class="fas fa-calendar"></i>
                 <%= time_ago_in_words(video.published_at) %> 전 업로드
-              </div>
-              
-              <!-- YouTube 링크 버튼 -->
-              <div class="mt-auto">
-                <a href="<%= video.youtube_url %>" 
-                   target="_blank" 
-                   class="btn btn-danger w-100">
-                  <i class="fab fa-youtube"></i>
-                  YouTube에서 보기
-                </a>
               </div>
             </div>
           </div>
@@ -194,6 +184,189 @@
   </div>
   <p class="mt-3 text-muted">데이터를 불러오는 중...</p>
 </div>
+
+<!-- YouTube 플레이어 모달 -->
+<div class="modal fade" id="youtubeModal" tabindex="-1" aria-labelledby="youtubeModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="youtubeModalLabel">YouTube 동영상</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="youtube-player-container">
+          <iframe id="youtubePlayer" 
+                  width="100%" 
+                  height="100%" 
+                  src="" 
+                  title="YouTube video player" 
+                  frameborder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                  referrerpolicy="strict-origin-when-cross-origin" 
+                  allowfullscreen>
+          </iframe>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a id="youtubeExternalLink" href="#" target="_blank" class="btn btn-danger">
+          <i class="fab fa-youtube"></i> YouTube에서 보기
+        </a>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% content_for :head do %>
+<style>
+  /* 5열 그리드 레이아웃 (검색 페이지와 동일) */
+  .videos-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+  }
+  
+  /* 반응형 그리드 */
+  @media (max-width: 1400px) {
+    .videos-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  
+  @media (max-width: 1200px) {
+    .videos-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .videos-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .videos-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* 썸네일 호버 효과 및 재생 버튼 */
+  .video-thumbnail-container {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .video-thumbnail-container:hover .video-thumbnail {
+    transform: scale(1.05);
+  }
+  
+  .play-button-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+    pointer-events: none;
+  }
+  
+  .video-thumbnail-container:hover .play-button-overlay {
+    color: #ff0000;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+  
+  /* YouTube 플레이어 모달 */
+  .youtube-player-container {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 비율 */
+    background: #000;
+  }
+  
+  .youtube-player-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* 모달 크기 조정 */
+  @media (max-width: 1200px) {
+    .modal-xl {
+      max-width: 90%;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .modal-xl {
+      max-width: 95%;
+      margin: 1rem;
+    }
+    
+    .youtube-player-container {
+      padding-bottom: 75%; /* 모바일에서 좀 더 높은 비율 */
+    }
+  }
+  
+  /* 기존 스타일 보존 */
+  .video-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+  .video-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  }
+  .video-thumbnail {
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // YouTube 모달 처리
+  const youtubeModal = document.getElementById('youtubeModal');
+  const youtubePlayer = document.getElementById('youtubePlayer');
+  const youtubeModalLabel = document.getElementById('youtubeModalLabel');
+  const youtubeExternalLink = document.getElementById('youtubeExternalLink');
+  
+  if (youtubeModal) {
+    // 모달이 열릴 때
+    youtubeModal.addEventListener('show.bs.modal', function(event) {
+      const button = event.relatedTarget;
+      const videoId = button.getAttribute('data-video-id');
+      const videoTitle = button.getAttribute('data-video-title');
+      
+      if (videoId) {
+        // YouTube 플레이어 URL 생성 (autoplay, 관련 동영상 숨김, 브랜딩 최소화)
+        const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&showinfo=0`;
+        const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        
+        // iframe src 설정
+        youtubePlayer.src = embedUrl;
+        
+        // 모달 제목 설정
+        youtubeModalLabel.textContent = videoTitle || 'YouTube 동영상';
+        
+        // 외부 링크 설정
+        youtubeExternalLink.href = watchUrl;
+      }
+    });
+    
+    // 모달이 닫힐 때 (동영상 정지)
+    youtubeModal.addEventListener('hide.bs.modal', function() {
+      youtubePlayer.src = '';
+    });
+  }
+});
+</script>
+<% end %>
 
 <script>
   // 폼 제출시 로딩 스피너 표시

@@ -59,8 +59,8 @@ class Api::V1::TrendingController < ApplicationController
     @region = params[:region]&.upcase || 'KR'
     @type = params[:type] || 'all'
     
-    # 유효하지 않은 지역 코드 처리
-    unless %w[KR US JP GB DE FR].include?(@region)
+    # 유효하지 않은 지역 코드 처리 (베트남, 인도네시아 추가)
+    unless %w[KR US JP GB DE FR VN ID].include?(@region)
       @region = 'KR'
     end
     

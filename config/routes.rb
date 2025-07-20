@@ -14,8 +14,8 @@ Rails.application.routes.draw do
   get 'trending', to: 'trending#index'
   
   # 검색 페이지
-  get 'search', to: 'search#index'
-  get 'search/results', to: 'search#results'
+  get 'search', to: 'search#index', as: 'search'
+  get 'search/results', to: 'search#results', as: 'search_results'
   # 새로운 수집 액션들
   post 'trending/collect_country/:region', to: 'trending#collect_country', as: 'collect_country'
   post 'trending/collect_all', to: 'trending#collect_all_countries', as: 'collect_all_countries'
