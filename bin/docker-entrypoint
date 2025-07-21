@@ -9,6 +9,11 @@ fi
 # If running the rails server then create or migrate existing database
 if [[ "$*" == *"rails server"* ]] || [[ "$*" == *"./bin/rails server"* ]]; then
   ./bin/rails db:prepare
+  
+  # Setup Solid Cache, Queue, and Cable tables for PostgreSQL
+  ./bin/rails solid_cache:setup || echo "Solid Cache setup failed or already exists"
+  ./bin/rails solid_queue:setup || echo "Solid Queue setup failed or already exists"  
+  ./bin/rails solid_cable:setup || echo "Solid Cable setup failed or already exists"
 fi
 
 exec "${@}"
