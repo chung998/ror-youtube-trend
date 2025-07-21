@@ -164,13 +164,15 @@
                   <!-- 전체 수집 버튼 -->
                   <div class="row mb-4">
                     <div class="col-12">
-                      <%= button_to "🌍 전체 국가 수집", admin_collect_all_path, 
-                                    method: :post,
-                                    class: "btn btn-primary btn-lg w-100 py-3 shadow",
-                                    data: { 
-                                      confirm: "모든 등록된 국가의 트렌드 데이터를 수집하시겠습니까? (약 5-10분 소요)",
-                                      disable_with: "전체 수집 중... 잠시만 기다려주세요"
-                                    } %>
+                      <button id="collectAllBtn" 
+                              class="btn btn-primary btn-lg w-100 py-3 shadow"
+                              onclick="collectAllCountries()">
+                        <span class="btn-text">🌍 전체 국가 수집</span>
+                        <span class="btn-loading d-none">
+                          <i class="fas fa-spinner fa-spin me-2"></i>
+                          수집 중... (<span id="collectProgress">0/8</span>)
+                        </span>
+                      </button>
                       <small class="text-muted d-block mt-2 text-center">
                         <i class="fas fa-info-circle me-1"></i>
                         한국, 미국, 일본, 영국, 독일, 프랑스, 베트남, 인도네시아 (총 8개국)
@@ -191,14 +193,16 @@
                          ['🇮🇩 인도네시아', 'ID', 'info']
                        ].each do |name, code, color| %>
                       <div class="col-lg-3 col-md-4 col-6">
-                        <%= button_to name, admin_collect_now_path, 
-                                      params: { region: code, type: 'all' },
-                                      method: :post,
-                                      class: "btn btn-outline-#{color} btn-sm w-100 py-2",
-                                      data: { 
-                                        confirm: "#{name} 지역의 트렌드 데이터를 수집하시겠습니까?",
-                                        disable_with: "수집 중..."
-                                      } %>
+                        <button class="btn btn-outline-<%= color %> btn-sm w-100 py-2 collect-single-btn"
+                                data-region="<%= code %>"
+                                data-name="<%= name %>"
+                                onclick="collectSingleCountry('<%= code %>', '<%= name %>', this)">
+                          <span class="btn-text"><%= name %></span>
+                          <span class="btn-loading d-none">
+                            <i class="fas fa-spinner fa-spin me-1"></i>
+                            수집 중...
+                          </span>
+                        </button>
                       </div>
                     <% end %>
                   </div>
@@ -614,6 +618,35 @@
     border-radius: 0.75rem;
   }
 
+  /* 수집 관련 스타일 */
+  .btn-loading {
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .btn:disabled {
+    opacity: 0.8;
+    cursor: not-allowed;
+  }
+  
+  .collect-feedback {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    max-width: 400px;
+    min-width: 300px;
+  }
+  
+  .progress-pulse {
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
   @media (max-width: 768px) {
     .nav-pills .nav-link {
       padding: 0.75rem 0.5rem !important;
@@ -623,6 +656,170 @@
       width: 2.5rem;
       height: 2.5rem;
     }
+    
+    .collect-feedback {
+      right: 10px;
+      left: 10px;
+      max-width: calc(100% - 20px);
+    }
   }
 </style>
 <% end %>
+
+<!-- 수집 피드백 알림 컨테이너 -->
+<div id="collectFeedback" class="collect-feedback"></div>
+
+<script>
+// CSRF 토큰 설정
+const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+// 피드백 알림 표시 함수
+function showFeedback(message, type = 'success', duration = 5000) {
+  const feedback = document.getElementById('collectFeedback');
+  const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+  const iconClass = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
+  
+  const alertHtml = `
+    <div class="alert ${alertClass} alert-dismissible fade show shadow" role="alert">
+      <div class="d-flex align-items-center">
+        <i class="${iconClass} me-2"></i>
+        <div class="flex-grow-1">
+          ${message}
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    </div>
+  `;
+  
+  feedback.innerHTML = alertHtml;
+  
+  // 자동 제거
+  setTimeout(() => {
+    const alert = feedback.querySelector('.alert');
+    if (alert) {
+      alert.classList.remove('show');
+      setTimeout(() => {
+        feedback.innerHTML = '';
+      }, 150);
+    }
+  }, duration);
+}
+
+// 개별 국가 수집 함수
+async function collectSingleCountry(region, name, buttonElement) {
+  if (!confirm(`${name} 지역의 트렌드 데이터를 수집하시겠습니까?`)) {
+    return;
+  }
+  
+  // 버튼 상태 변경
+  buttonElement.disabled = true;
+  buttonElement.classList.add('progress-pulse');
+  buttonElement.querySelector('.btn-text').classList.add('d-none');
+  buttonElement.querySelector('.btn-loading').classList.remove('d-none');
+  
+  try {
+    const response = await fetch('/admin/collect_now', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken,
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        region: region,
+        type: 'all'
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showFeedback(`${name} 지역에서 ${data.videos_collected}개의 영상을 성공적으로 수집했습니다!`, 'success');
+      // 통계 새로고침
+      setTimeout(() => location.reload(), 2000);
+    } else {
+      showFeedback(`${name} 지역 수집 실패: ${data.message}`, 'error');
+    }
+  } catch (error) {
+    console.error('수집 요청 실패:', error);
+    showFeedback(`${name} 지역 수집 중 오류가 발생했습니다.`, 'error');
+  } finally {
+    // 버튼 상태 복원
+    buttonElement.disabled = false;
+    buttonElement.classList.remove('progress-pulse');
+    buttonElement.querySelector('.btn-text').classList.remove('d-none');
+    buttonElement.querySelector('.btn-loading').classList.add('d-none');
+  }
+}
+
+// 전체 국가 수집 함수
+async function collectAllCountries() {
+  if (!confirm('모든 등록된 국가의 트렌드 데이터를 수집하시겠습니까?\n\n총 8개국을 순차적으로 수집하며 약 3-5분 정도 소요됩니다.')) {
+    return;
+  }
+  
+  const collectAllBtn = document.getElementById('collectAllBtn');
+  const progressSpan = document.getElementById('collectProgress');
+  
+  // 모든 수집 버튼 비활성화
+  const allButtons = document.querySelectorAll('.collect-single-btn, #collectAllBtn');
+  allButtons.forEach(btn => btn.disabled = true);
+  
+  // 전체 수집 버튼 상태 변경
+  collectAllBtn.classList.add('progress-pulse');
+  collectAllBtn.querySelector('.btn-text').classList.add('d-none');
+  collectAllBtn.querySelector('.btn-loading').classList.remove('d-none');
+  
+  try {
+    showFeedback('전체 국가 수집을 시작합니다...', 'success', 3000);
+    
+    const response = await fetch('/admin/collect_all', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken,
+        'Accept': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      let message = `전체 수집 완료!\n`;
+      message += `총 ${data.total_videos}개의 영상을 수집했습니다.\n`;
+      message += `성공: ${data.success_count}개국, 실패: ${data.failure_count}개국`;
+      
+      showFeedback(message.replace(/\n/g, '<br>'), 'success', 8000);
+      
+      // 상세 결과 표시
+      if (data.successful_regions.length > 0) {
+        console.log('수집 성공한 국가들:');
+        data.successful_regions.forEach(region => {
+          console.log(`- ${region.region}: ${region.count}개 영상`);
+        });
+      }
+      
+      if (data.failed_regions.length > 0) {
+        console.log('수집 실패한 국가들:');
+        data.failed_regions.forEach(region => {
+          console.log(`- ${region.region}: ${region.error}`);
+        });
+      }
+      
+      // 페이지 새로고침
+      setTimeout(() => location.reload(), 3000);
+    } else {
+      showFeedback(`전체 수집 실패: ${data.message}`, 'error');
+    }
+  } catch (error) {
+    console.error('전체 수집 요청 실패:', error);
+    showFeedback('전체 수집 중 오류가 발생했습니다.', 'error');
+  } finally {
+    // 버튼 상태 복원
+    allButtons.forEach(btn => btn.disabled = false);
+    collectAllBtn.classList.remove('progress-pulse');
+    collectAllBtn.querySelector('.btn-text').classList.remove('d-none');
+    collectAllBtn.querySelector('.btn-loading').classList.add('d-none');
+  }
+}
+</script>

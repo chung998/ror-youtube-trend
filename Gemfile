@@ -76,9 +76,6 @@ group :development do
   gem "web-console"
 end
 
-group :production do
-  # Use pg as the database for Active Record (Railway PostgreSQL)
-  gem "pg", "~> 1.1"
-end
+# PostgreSQL 지원 제거됨 - 모든 환경에서 SQLite 사용
 
 # gem "cssbundling-rails"  # Disabled: Using Bootstrap CDN instead
