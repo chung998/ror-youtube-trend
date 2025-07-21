@@ -49,8 +49,9 @@ RUN chmod +x bin/*
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 
-# Precompile assets for production
-RUN RAILS_ENV=production SECRET_KEY_BASE=dummy_key_for_asset_precompile bundle exec rails assets:precompile
+# Skip asset precompilation - using Bootstrap CDN and importmap instead
+# Asset precompilation can fail in Railway environment without proper SECRET_KEY_BASE
+# RUN RAILS_ENV=production SECRET_KEY_BASE=dummy_key_for_asset_precompile bundle exec rails assets:precompile
 
 
 
