@@ -49,8 +49,8 @@ RUN chmod +x bin/*
 RUN bundle exec bootsnap precompile app/ lib/
 
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-# Rails 8 with Propshaft handles assets differently, skip precompile for now
-# RUN RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
+# Rails 8 with Propshaft still requires asset precompilation
+RUN RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
 
 
 
@@ -70,7 +70,7 @@ COPY --from=build /rails /rails
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
-    chown -R rails:rails db log storage tmp && \
+    chown -R rails:rails db log storage tmp public && \
     mkdir -p /rails/storage && \
     chown -R rails:rails /rails/storage
 USER 1000:1000
