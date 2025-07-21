@@ -228,9 +228,9 @@ class YoutubeSearchService
   def self.duration_options
     [
       ['모든 길이', ''],
-      ['20초 이하 (Shorts)', 'short'],    # 4분 미만
-      ['20초~60초', 'medium'],             # 4분~20분
-      ['60초 이상', 'long']                # 20분 이상
+      ['4분 미만 (짧은 영상)', 'short'],    # 4분 미만
+      ['4분~20분 (중간 영상)', 'medium'],   # 4분~20분 (포함)
+      ['20분 초과 (긴 영상)', 'long']       # 20분 초과
     ]
   end
 
@@ -255,7 +255,9 @@ class YoutubeSearchService
       ['최신순', 'published_desc'],
       ['오래된순', 'published_asc'],
       ['짧은 영상순', 'duration_asc'],
-      ['긴 영상순', 'duration_desc']
+      ['긴 영상순', 'duration_desc'],
+      ['제목 가나다순', 'title_asc'],
+      ['제목 역순', 'title_desc']
     ]
   end
 

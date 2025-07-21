@@ -95,7 +95,7 @@ class SearchController < ApplicationController
     when 'title_asc'
       items.sort_by { |item| item[:title].downcase }
     when 'title_desc'
-      items.sort_by { |item| -item[:title].downcase }
+      items.sort_by { |item| item[:title].downcase }.reverse
     else
       # 'relevance' 또는 기본값: 원래 순서 유지
       items
