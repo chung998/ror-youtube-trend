@@ -27,31 +27,40 @@ class TrendingCollectionService
       saved_count = 0
       
       all_videos.each do |video_data|
-        # 중복 체크 추가
-        existing_video = TrendingVideo.where(
-          video_id: video_data[:video_id],
-          region_code: region_code,
-          collection_date: date
-        ).first
-        
-        unless existing_video
-          video = TrendingVideo.create!(
+        begin
+          # 먼저 기존 비디오가 있는지 확인
+          existing_video = TrendingVideo.find_by(
             video_id: video_data[:video_id],
-            title: video_data[:title],
-            description: video_data[:description],
-            channel_title: video_data[:channel_title],
-            channel_id: video_data[:channel_id],
-            view_count: video_data[:view_count],
-            like_count: video_data[:like_count],
-            comment_count: video_data[:comment_count],
-            published_at: video_data[:published_at],
-            duration: video_data[:duration],
-            thumbnail_url: video_data[:thumbnail_url],
-            is_shorts: video_data[:is_shorts],
             region_code: region_code,
             collection_date: date
           )
-          saved_count += 1
+          
+          unless existing_video
+            # 새 비디오 생성
+            TrendingVideo.create!(
+              video_id: video_data[:video_id],
+              title: video_data[:title],
+              description: video_data[:description],
+              channel_title: video_data[:channel_title],
+              channel_id: video_data[:channel_id],
+              view_count: video_data[:view_count],
+              like_count: video_data[:like_count],
+              comment_count: video_data[:comment_count],
+              published_at: video_data[:published_at],
+              duration: video_data[:duration],
+              thumbnail_url: video_data[:thumbnail_url],
+              is_shorts: video_data[:is_shorts],
+              region_code: region_code,
+              collection_date: date
+            )
+            saved_count += 1
+          else
+            Rails.logger.debug "중복 비디오 무시: #{video_data[:video_id]} (#{region_code}, #{date})"
+          end
+          
+        rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => e
+          Rails.logger.warn "비디오 저장 실패/중복 (#{video_data[:video_id]}): #{e.message}"
+          # 에러가 발생해도 계속 진행
         end
       end
       
