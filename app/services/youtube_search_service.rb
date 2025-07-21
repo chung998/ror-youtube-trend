@@ -7,8 +7,9 @@ class YoutubeSearchService
     raise "YouTube API key가 설정되지 않았습니다. Railway 환경변수에서 YOUTUBE_API_KEY를 확인하세요." unless @api_key
   end
 
-  def search_videos(query:, region_code: 'KR', duration: nil, order: 'relevance', 
+  def search_videos(query:, region_code: 'KR', duration: nil, order: 'viewCount', 
                    published_after: nil, published_before: nil, page_token: nil, max_results: 25, include_stats: true)
+    
     
     options = {
       query: build_search_query(
@@ -38,6 +39,15 @@ class YoutubeSearchService
         
         # 검색 결과에 상세 정보 병합
         search_result[:items] = merge_video_statistics(search_result[:items], video_stats)
+        
+        
+        # 라이브 스트림 추가 필터링 (duration이 0이거나 매우 긴 경우)
+        search_result[:items] = search_result[:items].reject do |item|
+          item[:duration_seconds] == 0 || item[:duration].nil? || item[:duration].empty?
+        end
+        
+        # 요청한 개수만큼 제한
+        search_result[:items] = search_result[:items].first(max_results)
       end
       
       search_result
@@ -98,7 +108,8 @@ class YoutubeSearchService
       'q' => q,
       'regionCode' => region_code,
       'order' => order,
-      'maxResults' => max_results,
+      'maxResults' => max_results * 2,  # 라이브 제외로 인한 결과 부족 방지
+      'eventType' => 'completed',       # 라이브 스트림 제외 (완료된 비디오만)
       'fields' => 'nextPageToken,prevPageToken,pageInfo,items(id,snippet)'
     }
 
@@ -228,17 +239,17 @@ class YoutubeSearchService
   def self.duration_options
     [
       ['모든 길이', ''],
-      ['4분 미만 (짧은 영상)', 'short'],    # 4분 미만
-      ['4분~20분 (중간 영상)', 'medium'],   # 4분~20분 (포함)
-      ['20분 초과 (긴 영상)', 'long']       # 20분 초과
+      ['4분 미만 (짧은 영상)', 'short'],    # YouTube API: short
+      ['4분~20분 (중간 영상)', 'medium'],   # YouTube API: medium  
+      ['20분 초과 (긴 영상)', 'long']       # YouTube API: long
     ]
   end
 
   def self.order_options
     [
+      ['조회수', 'viewCount'],      # 기본 정렬을 조회수로 변경
       ['관련성', 'relevance'],
       ['최신순', 'date'],
-      ['조회수', 'viewCount'],
       ['평점', 'rating'],
       ['제목', 'title']
     ]
@@ -277,5 +288,39 @@ class YoutubeSearchService
       ['🇨🇦 캐나다', 'CA'],
       ['🇦🇺 호주', 'AU']
     ]
+  end
+
+  # 발행 날짜 프리셋 옵션
+  def self.date_preset_options
+    [
+      ['전체 기간', ''],
+      ['일간 (오늘)', 'today'],
+      ['주간 (7일)', 'week'], 
+      ['월간 (30일)', 'month']
+    ]
+  end
+
+  # 프리셋에 따른 날짜 범위 계산
+  def self.calculate_date_range(preset)
+    case preset
+    when 'today'
+      today = Date.current
+      {
+        published_after: today.beginning_of_day.iso8601,
+        published_before: today.end_of_day.iso8601
+      }
+    when 'week'
+      {
+        published_after: 7.days.ago.iso8601,
+        published_before: Time.current.iso8601
+      }
+    when 'month'
+      {
+        published_after: 30.days.ago.iso8601,
+        published_before: Time.current.iso8601
+      }
+    else
+      { published_after: nil, published_before: nil }
+    end
   end
 end

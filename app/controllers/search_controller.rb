@@ -9,12 +9,22 @@ class SearchController < ApplicationController
     @query = search_params[:q]
     @region = search_params[:region] || 'KR'
     @duration = search_params[:duration]
-    @order = search_params[:order] || 'relevance'
+    @order = search_params[:order] || 'viewCount'  # 기본 정렬을 조회수로 변경
     @sort = search_params[:sort] || 'relevance'
     @max_results = [search_params[:max_results].to_i, 50].min # 최대 50개 제한
     @max_results = 25 if @max_results <= 0 # 기본값 25개
-    @published_after = parse_date_start(search_params[:published_after])
-    @published_before = parse_date_end(search_params[:published_before])
+    @date_preset = search_params[:date_preset]
+    
+    # 날짜 프리셋이 있으면 날짜 범위 자동 계산
+    if @date_preset.present?
+      date_range = YoutubeSearchService.calculate_date_range(@date_preset)
+      @published_after = date_range[:published_after]
+      @published_before = date_range[:published_before]
+    else
+      @published_after = parse_date_start(search_params[:published_after])
+      @published_before = parse_date_end(search_params[:published_before])
+    end
+    
     @page_token = search_params[:page_token]
 
     if @query.present?
@@ -50,7 +60,7 @@ class SearchController < ApplicationController
   private
 
   def search_params
-    params.permit(:q, :region, :duration, :order, :sort, :max_results, :published_after, :published_before, :page_token, :commit)
+    params.permit(:q, :region, :duration, :order, :sort, :max_results, :date_preset, :published_after, :published_before, :page_token, :commit)
   end
 
   def parse_date_start(date_string)

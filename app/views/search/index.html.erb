@@ -1,107 +1,253 @@
 <% content_for :title, "YouTube 동영상 검색" %>
 
-<div class="container-fluid">
+<div class="container-fluid px-lg-5">
   <!-- 검색 헤더 -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <h1 class="display-6">
-        <i class="fab fa-youtube text-danger"></i>
-        YouTube 동영상 검색
-      </h1>
-      <p class="text-muted">키워드, 지역, 길이, 발행 날짜 등 다양한 필터로 검색하고 결과를 정렬할 수 있습니다</p>
+  <div class="search-header">
+    <div class="row align-items-center mb-3">
+      <div class="col-md-8">
+        <h1 class="display-5 mb-2">
+          <span class="youtube-icon-gradient">
+            <i class="fab fa-youtube"></i>
+          </span>
+          YouTube 검색
+        </h1>
+        <p class="lead text-muted mb-0">전 세계 YouTube 콘텐츠를 필터와 함께 탐색하세요</p>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <div class="search-stats">
+          <div class="stat-item">
+            <i class="fas fa-search text-primary"></i>
+            <small class="text-muted">실시간 검색</small>
+          </div>
+          <div class="stat-item">
+            <i class="fas fa-filter text-success"></i>
+            <small class="text-muted">스마트 필터</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 필터 안내 - 접을 수 있는 형태 -->
+    <div class="filter-notice">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-lightbulb text-warning me-2"></i>
+          <span class="fw-medium">검색 필터 안내</span>
+        </div>
+        <button class="btn btn-link btn-sm p-0" type="button" data-bs-toggle="collapse" data-bs-target="#filterHelp">
+          <i class="fas fa-chevron-down"></i>
+        </button>
+      </div>
+      <div class="collapse mt-2" id="filterHelp">
+        <div class="filter-help-content">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <div class="help-item">
+                <i class="fas fa-globe text-primary"></i>
+                <strong>지역 필터</strong>
+                <small>해당 지역 선호 콘텐츠를 우선 표시하지만 글로벌 인기 영상도 포함됩니다.</small>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="help-item">
+                <i class="fas fa-calendar text-success"></i>
+                <strong>날짜 필터</strong>
+                <small>지정한 기간의 영상을 우선하지만 인기도에 따라 결과가 달라질 수 있습니다.</small>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="help-item">
+                <i class="fas fa-clock text-info"></i>
+                <strong>길이 필터</strong>
+                <small>동영상 길이는 정확하게 필터링되지만 결과 수가 제한될 수 있습니다.</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- 검색 필터 -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header">
-          <h5 class="mb-0">
-            <i class="fas fa-search"></i>
-            검색 필터
-          </h5>
-        </div>
-        <div class="card-body">
-          <%= form_with url: search_results_path, method: :get, local: true, class: "row g-3", id: "search-form" do |f| %>
-            <!-- 검색 키워드 -->
-            <div class="col-md-3">
-              <label for="search_query" class="form-label">검색 키워드</label>
-              <%= f.text_field :q, value: @query, 
-                              class: "form-control", 
-                              id: "search_query",
-                              placeholder: "예: 케이팝, 요리, 게임 등" %>
+  <div class="search-filters-section">
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="filter-card">
+          <div class="filter-card-header">
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center">
+                <div class="filter-icon">
+                  <i class="fas fa-sliders-h"></i>
+                </div>
+                <div>
+                  <h5 class="mb-0">검색 & 필터</h5>
+                  <small class="text-muted">원하는 조건으로 YouTube 영상을 검색하세요</small>
+                </div>
+              </div>
+              <div class="filter-actions">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="resetFilters">
+                  <i class="fas fa-undo"></i> 초기화
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="filter-card-body">
+          <%= form_with url: search_results_path, method: :get, local: true, class: "search-form", id: "search-form" do |f| %>
+            <!-- 메인 검색 키워드 -->
+            <div class="main-search-section">
+              <div class="search-input-group">
+                <div class="search-icon">
+                  <i class="fas fa-search"></i>
+                </div>
+                <%= f.text_field :q, value: @query, 
+                                class: "form-control search-main-input", 
+                                id: "search_query",
+                                placeholder: "YouTube에서 검색할 키워드를 입력하세요...",
+                                autocomplete: "off" %>
+                <button type="submit" class="search-btn">
+                  <i class="fas fa-search"></i>
+                  검색
+                </button>
+              </div>
+              
+              <!-- 인기 검색어 태그 -->
+              <div class="popular-tags mt-3">
+                <span class="tag-label">인기 검색어:</span>
+                <% ['K-POP', '요리', '게임', '뉴스', '운동', '여행', 'ASMR', '브이로그'].each do |tag| %>
+                  <button type="button" class="tag-btn" data-tag="<%= tag %>">
+                    <%= tag %>
+                  </button>
+                <% end %>
+              </div>
+            </div>
+            
+            <!-- 고급 필터 토글 -->
+            <div class="advanced-filters-toggle mt-4">
+              <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#advancedFilters">
+                <i class="fas fa-cog"></i>
+                고급 필터
+                <i class="fas fa-chevron-down ms-1"></i>
+              </button>
+            </div>
+            
+            <!-- 고급 필터 영역 -->
+            <div class="collapse show" id="advancedFilters">
+              <div class="advanced-filters-grid mt-3">
+
+                <!-- 필터 그룹 1: 지역 & 길이 -->
+                <div class="filter-group">
+                  <h6 class="filter-group-title">
+                    <i class="fas fa-globe text-primary"></i>
+                    지역 & 콘텐츠
+                  </h6>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <div class="filter-item">
+                        <label for="search_region" class="filter-label">
+                          지역
+                          <span class="filter-hint" title="해당 지역 선호 콘텐츠 우선 표시">
+                            <i class="fas fa-info-circle"></i>
+                          </span>
+                        </label>
+                        <%= f.select :region, 
+                                    options_for_select(YoutubeSearchService.region_options, @region),
+                                    {}, 
+                                    { class: "form-select filter-select", id: "search_region" } %>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="filter-item">
+                        <label for="search_duration" class="filter-label">동영상 길이</label>
+                        <%= f.select :duration, 
+                                    options_for_select(YoutubeSearchService.duration_options, @duration),
+                                    {}, 
+                                    { class: "form-select filter-select", id: "search_duration" } %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 필터 그룹 2: 정렬 & 결과 수 -->
+                <div class="filter-group">
+                  <h6 class="filter-group-title">
+                    <i class="fas fa-sort text-success"></i>
+                    정렬 & 개수
+                  </h6>
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <div class="filter-item">
+                        <label for="search_order" class="filter-label">정렬 기준</label>
+                        <%= f.select :order, 
+                                    options_for_select(YoutubeSearchService.order_options, @order),
+                                    {}, 
+                                    { class: "form-select filter-select", id: "search_order" } %>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="filter-item">
+                        <label for="search_max_results" class="filter-label">결과 개수</label>
+                        <%= f.select :max_results, 
+                                    options_for_select([
+                                      ['10개', 10],
+                                      ['25개 (추천)', 25],
+                                      ['50개 (최대)', 50]
+                                    ], @max_results || 25),
+                                    {}, 
+                                    { class: "form-select filter-select", id: "search_max_results" } %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 필터 그룹 3: 발행 날짜 -->
+                <div class="filter-group">
+                  <h6 class="filter-group-title">
+                    <i class="fas fa-calendar text-info"></i>
+                    발행 기간
+                    <span class="filter-hint" title="날짜 범위 설정 시에도 인기 콘텐츠가 우선 표시될 수 있음">
+                      <i class="fas fa-info-circle"></i>
+                    </span>
+                  </h6>
+                  <div class="date-filter-section">
+                    <div class="date-preset-buttons">
+                      <% YoutubeSearchService.date_preset_options.each do |label, value| %>
+                        <button type="button" 
+                                class="date-preset-btn <%= 'active' if @date_preset == value %>"
+                                data-preset="<%= value %>">
+                          <%= label %>
+                        </button>
+                      <% end %>
+                    </div>
+                    
+                    <!-- 커스텀 날짜 영역 -->
+                    <div class="custom-date-section mt-3" id="custom-dates" style="display: none;">
+                      <div class="row g-2">
+                        <div class="col-6">
+                          <label class="filter-label small">시작일</label>
+                          <%= f.date_field :published_after, 
+                              value: params[:published_after], 
+                              class: "form-control" %>
+                        </div>
+                        <div class="col-6">
+                          <label class="filter-label small">종료일</label>
+                          <%= f.date_field :published_before, 
+                              value: params[:published_before], 
+                              class: "form-control" %>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-link btn-sm mt-2 p-0" id="toggle-custom-dates">
+                      <i class="fas fa-calendar-alt"></i>
+                      정확한 날짜 입력
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <!-- 지역 선택 -->
-            <div class="col-md-2">
-              <label for="search_region" class="form-label">지역</label>
-              <%= f.select :region, 
-                          options_for_select(YoutubeSearchService.region_options, @region),
-                          {}, 
-                          { class: "form-select", id: "search_region" } %>
-            </div>
-
-            <!-- 동영상 길이 -->
-            <div class="col-md-2">
-              <label for="search_duration" class="form-label">동영상 길이</label>
-              <%= f.select :duration, 
-                          options_for_select(YoutubeSearchService.duration_options, @duration),
-                          {}, 
-                          { class: "form-select", id: "search_duration" } %>
-            </div>
-
-            <!-- YouTube API 정렬 -->
-            <div class="col-md-2">
-              <label for="search_order" class="form-label">YouTube 정렬</label>
-              <%= f.select :order, 
-                          options_for_select(YoutubeSearchService.order_options, @order),
-                          {}, 
-                          { class: "form-select", id: "search_order" } %>
-            </div>
-
-            <!-- 최대 결과 수 -->
-            <div class="col-md-2">
-              <label for="search_max_results" class="form-label">최대 개수</label>
-              <%= f.select :max_results, 
-                          options_for_select([
-                            ['10개', 10],
-                            ['25개 (기본)', 25],
-                            ['50개 (최대)', 50]
-                          ], @max_results || 25),
-                          {}, 
-                          { class: "form-select", id: "search_max_results" } %>
-            </div>
-
-            <!-- 검색 버튼 -->
-            <div class="col-md-1 d-flex align-items-end">
-              <%= f.submit "검색", class: "btn btn-primary" %>
-            </div>
-
-            <!-- 발행 날짜 시작 -->
-            <div class="col-md-3">
-              <label for="search_published_after" class="form-label">발행 날짜 (시작)</label>
-              <%= f.date_field :published_after, 
-                              value: params[:published_after],
-                              class: "form-control", 
-                              id: "search_published_after" %>
-            </div>
-
-            <!-- 발행 날짜 끝 -->
-            <div class="col-md-3">
-              <label for="search_published_before" class="form-label">발행 날짜 (끝)</label>
-              <%= f.date_field :published_before, 
-                              value: params[:published_before],
-                              class: "form-control", 
-                              id: "search_published_before" %>
-            </div>
-
-            <!-- 초기화 버튼 -->
-            <div class="col-md-6 d-flex align-items-end">
-              <%= link_to "초기화", search_path, class: "btn btn-outline-secondary" %>
-            </div>
-
-            <!-- 숨김 필드 -->
+            <!-- 숨김 필드들 -->
+            <%= f.hidden_field :date_preset, value: @date_preset, id: "hidden_date_preset" %>
             <%= f.hidden_field :page_token, value: params[:page_token] %>
             <%= f.hidden_field :sort, value: @sort, id: "hidden_sort" %>
           <% end %>
@@ -193,9 +339,10 @@
           
           <div class="card-body">
             <% if @search_results[:items].any? %>
+              <!-- 동영상 목록 -->
               <div class="videos-grid" id="videos-container">
                 <% @search_results[:items].each_with_index do |video, index| %>
-                  <div class="video-item" 
+                  <div class="video-card-wrapper" 
                        data-view-count="<%= video[:view_count] %>"
                        data-like-count="<%= video[:like_count] %>"
                        data-comment-count="<%= video[:comment_count] %>"
@@ -203,94 +350,92 @@
                        data-duration-seconds="<%= video[:duration_seconds] %>"
                        data-title="<%= video[:title].downcase %>"
                        data-original-index="<%= index %>">
-                    <div class="card h-100 video-card">
-                      <!-- 썸네일 -->
-                      <div class="position-relative">
+                    
+                    <div class="video-card">
+                      <!-- 썸네일 섹션 -->
+                      <div class="video-thumbnail-section">
                         <div class="video-thumbnail-container" 
                              data-bs-toggle="modal" 
                              data-bs-target="#youtubeModal"
                              data-video-id="<%= video[:video_id] %>"
-                             data-video-title="<%= video[:title] %>"
-                             style="cursor: pointer;">
+                             data-video-title="<%= video[:title] %>">
                           <%= image_tag video[:thumbnail_url], 
-                                       class: "card-img-top video-thumbnail", 
+                                       class: "video-thumbnail", 
                                        alt: video[:title],
                                        loading: "lazy" %>
-                          <!-- 재생 버튼 오버레이 -->
-                          <div class="play-button-overlay">
-                            <i class="fas fa-play-circle"></i>
+                          
+                          <!-- 재생 오버레이 -->
+                          <div class="play-overlay">
+                            <div class="play-button">
+                              <i class="fab fa-youtube"></i>
+                            </div>
                           </div>
+                          
+                          <!-- 지속시간 배지 -->
+                          <% if video[:duration_seconds] && video[:duration_seconds] > 0 %>
+                            <div class="duration-badge">
+                              <%= YoutubeSearchService.format_duration(video[:duration_seconds]) %>
+                            </div>
+                          <% end %>
+                          
+                          <!-- Shorts 배지 -->
+                          <% if video[:duration_seconds] && video[:duration_seconds] <= 60 %>
+                            <div class="shorts-badge">
+                              <i class="fas fa-mobile-alt"></i>
+                              Shorts
+                            </div>
+                          <% end %>
                         </div>
-                        
-                        <!-- 지속시간 배지 -->
-                        <% if video[:duration_seconds] && video[:duration_seconds] > 0 %>
-                          <span class="duration-badge">
-                            <%= YoutubeSearchService.format_duration(video[:duration_seconds]) %>
-                          </span>
-                        <% end %>
-                        
-                        <!-- Shorts 배지 -->
-                        <% if video[:duration_seconds] && video[:duration_seconds] <= 60 %>
-                          <span class="shorts-badge">Shorts</span>
-                        <% end %>
                       </div>
                       
-                      <!-- 동영상 정보 -->
-                      <div class="card-body">
-                        <h6 class="card-title">
-                          <%= link_to video[:watch_url], target: "_blank", class: "text-decoration-none text-dark" do %>
-                            <%= truncate(video[:title], length: 80) %>
+                      <!-- 콘텐츠 섹션 -->
+                      <div class="video-content">
+                        <h3 class="video-title">
+                          <%= link_to video[:watch_url], target: "_blank", class: "title-link" do %>
+                            <%= video[:title] %>
                           <% end %>
-                        </h6>
+                        </h3>
                         
-                        <p class="card-text text-muted small mb-2">
-                          <i class="fas fa-user"></i>
-                          <%= video[:channel_title] %>
-                        </p>
-                        
-                        <!-- 통계 정보 -->
-                        <div class="video-stats mb-2">
-                          <div class="row text-center">
-                            <div class="col-4">
-                              <small class="text-muted">
-                                <i class="fas fa-eye text-primary"></i><br>
-                                <strong><%= YoutubeSearchService.format_view_count(video[:view_count]) %></strong><br>
-                                <span class="tiny-text">조회수</span>
-                              </small>
-                            </div>
-                            <div class="col-4">
-                              <small class="text-muted">
-                                <i class="fas fa-thumbs-up text-success"></i><br>
-                                <strong><%= number_with_delimiter(video[:like_count]) %></strong><br>
-                                <span class="tiny-text">좋아요</span>
-                              </small>
-                            </div>
-                            <div class="col-4">
-                              <small class="text-muted">
-                                <i class="fas fa-comment text-warning"></i><br>
-                                <strong><%= number_with_delimiter(video[:comment_count]) %></strong><br>
-                                <span class="tiny-text">댓글</span>
-                              </small>
-                            </div>
+                        <div class="video-meta">
+                          <div class="channel-info">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="channel-name"><%= video[:channel_title] %></span>
+                          </div>
+                          
+                          <div class="publish-date">
+                            <i class="fas fa-calendar-alt"></i>
+                            <%= video[:published_at].strftime("%Y년 %m월 %d일") %>
                           </div>
                         </div>
                         
-                        <p class="card-text">
-                          <small class="text-muted">
-                            <%= truncate(video[:description], length: 100) %>
-                          </small>
-                        </p>
-                        
-                        <div class="d-flex justify-content-between align-items-center">
-                          <small class="text-muted">
-                            <i class="fas fa-calendar"></i>
-                            <%= video[:published_at].strftime("%Y.%m.%d") %>
-                          </small>
+                        <!-- 통계 정보 -->
+                        <div class="video-stats">
+                          <div class="stat-item views">
+                            <i class="fas fa-eye"></i>
+                            <span class="stat-value"><%= YoutubeSearchService.format_view_count(video[:view_count]) %></span>
+                            <span class="stat-label">조회수</span>
+                          </div>
                           
-                          <%= link_to "YouTube에서 보기", video[:watch_url], 
-                                     target: "_blank", 
-                                     class: "btn btn-sm btn-outline-danger" %>
+                          <div class="stat-item likes">
+                            <i class="fas fa-thumbs-up"></i>
+                            <span class="stat-value"><%= number_with_delimiter(video[:like_count]) %></span>
+                            <span class="stat-label">좋아요</span>
+                          </div>
+                          
+                          <div class="stat-item comments">
+                            <i class="fas fa-comment"></i>
+                            <span class="stat-value"><%= number_with_delimiter(video[:comment_count]) %></span>
+                            <span class="stat-label">댓글</span>
+                          </div>
                         </div>
+                        
+                        <!-- 설명 -->
+                        <% if video[:description].present? %>
+                          <div class="video-description">
+                            <%= truncate(video[:description], length: 120) %>
+                          </div>
+                        <% end %>
+                        
                       </div>
                     </div>
                   </div>
@@ -467,64 +612,223 @@
     border-right: none;
   }
   
-  /* 5열 그리드 레이아웃 */
+  /* 동영상 그리드 레이아웃 - 트렌드 페이지와 동일 */
   .videos-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 0;
   }
   
-  /* 반응형 그리드 */
-  @media (max-width: 1400px) {
-    .videos-grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
+  /* 비디오 카드 스타일 - 트렌드 페이지와 동일 */
+  .video-card-wrapper {
+    display: contents;
   }
   
-  @media (max-width: 1200px) {
-    .videos-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
+  .video-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: fit-content;
   }
   
-  @media (max-width: 768px) {
-    .videos-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
+  .video-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
   }
   
-  @media (max-width: 480px) {
-    .videos-grid {
-      grid-template-columns: 1fr;
-    }
+  /* 썸네일 섹션 */
+  .video-thumbnail-section {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    background: #000;
   }
   
-  /* 썸네일 호버 효과 및 재생 버튼 */
   .video-thumbnail-container {
     position: relative;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+  
+  .video-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .video-card:hover .video-thumbnail {
+    transform: scale(1.1);
+  }
+  
+  /* 재생 오버레이 */
+  .play-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+  }
+  
+  .video-card:hover .play-overlay {
+    opacity: 1;
+  }
+  
+  .play-button {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 0, 0, 0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+  }
+  
+  .video-card:hover .play-button {
+    transform: scale(1);
+  }
+  
+  /* 배지들 */
+  .duration-badge {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
+  }
+  
+  .shorts-badge {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: linear-gradient(135deg, #ff6b6b, #ff8e8e);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  /* 콘텐츠 섹션 */
+  .video-content {
+    padding: 1.25rem;
+  }
+  
+  .video-title {
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+    margin: 0 0 0.75rem 0;
+    color: #1a1a1a;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
   }
   
-  .video-thumbnail-container:hover .video-thumbnail {
-    transform: scale(1.05);
+  .title-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
   }
   
-  .play-button-overlay {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 3rem;
-    color: rgba(255, 255, 255, 0.9);
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    transition: all 0.3s ease;
-    pointer-events: none;
-  }
-  
-  .video-thumbnail-container:hover .play-button-overlay {
+  .title-link:hover {
     color: #ff0000;
-    transform: translate(-50%, -50%) scale(1.1);
   }
+  
+  /* 메타 정보 */
+  .video-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #666;
+  }
+  
+  .channel-info,
+  .publish-date {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .channel-name {
+    font-weight: 500;
+    color: #444;
+  }
+  
+  /* 통계 */
+  .video-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+  }
+  
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1;
+  }
+  
+  .stat-item i {
+    font-size: 1rem;
+    color: #666;
+  }
+  
+  .stat-item.views i { color: #3b82f6; }
+  .stat-item.likes i { color: #10b981; }
+  .stat-item.comments i { color: #f59e0b; }
+  
+  .stat-value {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #1a1a1a;
+  }
+  
+  .stat-label {
+    font-size: 0.7rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  /* 설명 */
+  .video-description {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #666;
+    margin-bottom: 1rem;
+  }
+  
   
   /* YouTube 플레이어 모달 */
   .youtube-player-container {
@@ -569,10 +873,467 @@
   .sorting {
     opacity: 0.7;
   }
+  
+  /* 헤더 스타일 */
+  .search-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 1.5rem;
+    margin: -1.5rem -3rem 2rem -3rem;
+    border-radius: 0 0 20px 20px;
+  }
+  
+  @media (max-width: 992px) {
+    .search-header {
+      margin: -1.5rem -1.5rem 2rem -1.5rem;
+    }
+  }
+  
+  .youtube-icon-gradient {
+    background: linear-gradient(45deg, #ff0000, #ff4444);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  .search-stats {
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  .stat-item i {
+    font-size: 1.25rem;
+  }
+  
+  /* 필터 안내 */
+  .filter-notice {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .filter-help-content {
+    padding-top: 1rem;
+  }
+  
+  .help-item {
+    text-align: center;
+    padding: 0.75rem;
+  }
+  
+  .help-item i {
+    display: block;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .help-item strong {
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+  
+  .help-item small {
+    opacity: 0.9;
+    line-height: 1.4;
+  }
+  
+  /* 필터 카드 스타일 */
+  .filter-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+  
+  .filter-card-header {
+    background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
+    padding: 1.5rem;
+    border-bottom: 1px solid #e3e8f0;
+  }
+  
+  .filter-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+    margin-right: 1rem;
+  }
+  
+  .filter-card-body {
+    padding: 2rem;
+  }
+  
+  /* 검색 폼 스타일 */
+  .search-form {
+    max-width: 100%;
+  }
+  
+  .main-search-section {
+    margin-bottom: 2rem;
+  }
+  
+  .search-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 2px solid #e3e8f0;
+    border-radius: 25px;
+    padding: 0.5rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+  }
+  
+  .search-input-group:focus-within {
+    border-color: #667eea;
+    box-shadow: 0 5px 25px rgba(102, 126, 234, 0.2);
+  }
+  
+  .search-icon {
+    padding: 0 1rem;
+    color: #8892b0;
+  }
+  
+  .search-main-input {
+    border: none;
+    outline: none;
+    flex: 1;
+    font-size: 1.1rem;
+    padding: 0.75rem 0;
+    background: transparent;
+  }
+  
+  .search-main-input::placeholder {
+    color: #8892b0;
+  }
+  
+  .search-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 20px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .search-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+  }
+  
+  /* 인기 태그 */
+  .popular-tags {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  
+  .tag-label {
+    color: #8892b0;
+    font-size: 0.9rem;
+    margin-right: 0.5rem;
+  }
+  
+  .tag-btn {
+    background: #f8f9ff;
+    color: #667eea;
+    border: 1px solid #e3e8f0;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+  }
+  
+  .tag-btn:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-1px);
+  }
+  
+  /* 고급 필터 */
+  .advanced-filters-grid {
+    background: #f8f9ff;
+    border-radius: 15px;
+    padding: 1.5rem;
+  }
+  
+  .filter-group {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  }
+  
+  .filter-group:last-child {
+    margin-bottom: 0;
+  }
+  
+  .filter-group-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: #2d3748;
+  }
+  
+  .filter-group-title i {
+    margin-right: 0.5rem;
+  }
+  
+  .filter-item {
+    position: relative;
+  }
+  
+  .filter-label {
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+  }
+  
+  .filter-hint {
+    margin-left: 0.5rem;
+    color: #a0aec0;
+    cursor: help;
+  }
+  
+  .filter-select {
+    border: 1.5px solid #e3e8f0;
+    border-radius: 10px;
+    padding: 0.75rem;
+    transition: all 0.2s ease;
+  }
+  
+  .filter-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+  
+  /* 날짜 필터 */
+  .date-preset-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  
+  .date-preset-btn {
+    background: #f8f9ff;
+    color: #667eea;
+    border: 1.5px solid #e3e8f0;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .date-preset-btn:hover {
+    background: #e3e8f0;
+    transform: translateY(-1px);
+  }
+  
+  .date-preset-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #667eea;
+  }
+  
+  .custom-date-section {
+    background: #f8f9ff;
+    padding: 1rem;
+    border-radius: 10px;
+  }
+  
+  /* 반응형 디자인 */
+  @media (max-width: 1200px) {
+    .videos-grid {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .search-header {
+      padding: 1.5rem 1rem;
+      margin: -1rem -1rem 1.5rem -1rem;
+    }
+    
+    .search-stats {
+      justify-content: center;
+      margin-top: 1rem;
+    }
+    
+    .search-input-group {
+      flex-direction: column;
+      gap: 0.5rem;
+      padding: 1rem;
+    }
+    
+    .search-main-input {
+      text-align: center;
+    }
+    
+    .search-btn {
+      align-self: stretch;
+      justify-content: center;
+    }
+    
+    .popular-tags {
+      justify-content: center;
+    }
+    
+    .date-preset-buttons {
+      justify-content: center;
+    }
+    
+    .filter-group {
+      padding: 1rem;
+    }
+    
+    .videos-grid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    
+    .video-content {
+      padding: 1rem;
+    }
+    
+    .video-stats {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .stat-item {
+      flex-direction: row;
+      justify-content: space-between;
+      padding: 0.5rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .video-thumbnail-section {
+      aspect-ratio: 16/9;
+    }
+    
+    .video-title {
+      font-size: 0.9rem;
+      -webkit-line-clamp: 3;
+    }
+    
+    .video-meta {
+      font-size: 0.8rem;
+    }
+  }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+  // 인기 태그 클릭 이벤트
+  const tagButtons = document.querySelectorAll('.tag-btn');
+  const searchInput = document.getElementById('search_query');
+  
+  tagButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const tag = this.getAttribute('data-tag');
+      if (searchInput) {
+        searchInput.value = tag;
+        searchInput.focus();
+      }
+    });
+  });
+  
+  // 날짜 프리셋 버튼 기능
+  const datePresetButtons = document.querySelectorAll('.date-preset-btn');
+  const hiddenDatePreset = document.getElementById('hidden_date_preset');
+  const customDatesDiv = document.getElementById('custom-dates');
+  const toggleCustomButton = document.getElementById('toggle-custom-dates');
+  
+  datePresetButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      // 모든 버튼에서 active 클래스 제거
+      datePresetButtons.forEach(btn => btn.classList.remove('active'));
+      
+      // 클릭된 버튼에 active 클래스 추가
+      this.classList.add('active');
+      
+      // 숨김 필드 업데이트
+      const preset = this.getAttribute('data-preset');
+      if (hiddenDatePreset) {
+        hiddenDatePreset.value = preset;
+      }
+      
+      // 커스텀 날짜 영역 숨기기
+      if (customDatesDiv) {
+        customDatesDiv.style.display = 'none';
+      }
+    });
+  });
+  
+  // 커스텀 날짜 토글
+  if (toggleCustomButton && customDatesDiv) {
+    toggleCustomButton.addEventListener('click', function() {
+      const isVisible = customDatesDiv.style.display !== 'none';
+      customDatesDiv.style.display = isVisible ? 'none' : 'block';
+      
+      if (!isVisible) {
+        // 프리셋 버튼들의 active 상태 제거
+        datePresetButtons.forEach(btn => btn.classList.remove('active'));
+        if (hiddenDatePreset) {
+          hiddenDatePreset.value = '';
+        }
+      }
+    });
+  }
+  
+  // 필터 초기화 버튼
+  const resetButton = document.getElementById('resetFilters');
+  if (resetButton) {
+    resetButton.addEventListener('click', function() {
+      // 폼 초기화
+      document.getElementById('search-form').reset();
+      
+      // 날짜 프리셋 버튼 초기화
+      datePresetButtons.forEach(btn => btn.classList.remove('active'));
+      if (datePresetButtons.length > 0) {
+        datePresetButtons[0].classList.add('active'); // 첫 번째(전체 기간)를 활성화
+      }
+      
+      // 커스텀 날짜 영역 숨기기
+      if (customDatesDiv) {
+        customDatesDiv.style.display = 'none';
+      }
+      
+      // 검색어에 포커스
+      if (searchInput) {
+        searchInput.focus();
+      }
+    });
+  }
+
   const liveSortSelect = document.getElementById('live_sort');
   const hiddenSortField = document.getElementById('hidden_sort');
   const videosContainer = document.getElementById('videos-container');
@@ -591,7 +1352,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       // 비디오 아이템들 가져오기
-      const videoItems = Array.from(videosContainer.querySelectorAll('.video-item'));
+      const videoItems = Array.from(videosContainer.querySelectorAll('.video-card-wrapper'));
       
       // 정렬 함수
       videoItems.sort((a, b) => {
