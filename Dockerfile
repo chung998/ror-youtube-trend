@@ -71,13 +71,12 @@ ENV RAILS_ENV=production \
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
 
-# Run and own only the runtime files as a non-root user for security
-RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
-    chown -R rails:rails db log storage tmp public && \
-    mkdir -p /rails/storage && \
-    chown -R rails:rails /rails/storage
-USER 1000:1000
+# Create necessary directories and set permissions
+RUN mkdir -p /rails/storage /rails/db /rails/log /rails/tmp && \
+    chmod -R 755 /rails/storage /rails/db /rails/log /rails/tmp
+
+# Railway volumes require root permissions for SQLite file creation
+# USER 1000:1000  # Commented out for Railway volume compatibility
 
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]

@@ -21,16 +21,16 @@ test:
 production:
   primary:
     <<: *default
-    database: /rails/storage/production.sqlite3
+    database: <%= ENV['RAILWAY_VOLUME_MOUNT_PATH'] || '/rails/storage' %>/production.sqlite3
   cache:
     <<: *default
-    database: /rails/storage/cache.sqlite3
+    database: <%= ENV['RAILWAY_VOLUME_MOUNT_PATH'] || '/rails/storage' %>/cache.sqlite3
     migrations_paths: db/cache_migrate
   queue:
     <<: *default
-    database: /rails/storage/queue.sqlite3
+    database: <%= ENV['RAILWAY_VOLUME_MOUNT_PATH'] || '/rails/storage' %>/queue.sqlite3
     migrations_paths: db/queue_migrate  
   cable:
     <<: *default
-    database: /rails/storage/cable.sqlite3
+    database: <%= ENV['RAILWAY_VOLUME_MOUNT_PATH'] || '/rails/storage' %>/cable.sqlite3
     migrations_paths: db/cable_migrate
