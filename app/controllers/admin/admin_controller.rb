@@ -95,9 +95,9 @@ class Admin::AdminController < ApplicationController
     if valid_region?(region)
       # 백그라운드 잡으로 수집 시작
       CollectTrendingDataJob.perform_later(region, collection_type)
-      redirect_to admin_path, notice: "#{region} 지역 데이터 수집을 시작했습니다."
+      redirect_to admin_root_path, notice: "#{region} 지역 데이터 수집을 시작했습니다."
     else
-      redirect_to admin_path, alert: "유효하지 않은 지역 코드입니다."
+      redirect_to admin_root_path, alert: "유효하지 않은 지역 코드입니다."
     end
   end
   
@@ -113,10 +113,10 @@ class Admin::AdminController < ApplicationController
                              .perform_later(region, 'all')
       end
       
-      redirect_to admin_path, notice: "전체 #{all_regions.length}개국 데이터 수집을 시작했습니다. 완료까지 약 #{(all_regions.length * 0.5).round}분 소요됩니다."
+      redirect_to admin_root_path, notice: "전체 #{all_regions.length}개국 데이터 수집을 시작했습니다. 완료까지 약 #{(all_regions.length * 0.5).round}분 소요됩니다."
     rescue => e
       Rails.logger.error "전체 수집 실패: #{e.message}"
-      redirect_to admin_path, alert: "전체 수집 시작에 실패했습니다: #{e.message}"
+      redirect_to admin_root_path, alert: "전체 수집 시작에 실패했습니다: #{e.message}"
     end
   end
 
