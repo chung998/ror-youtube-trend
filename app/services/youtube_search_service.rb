@@ -3,8 +3,8 @@ class YoutubeSearchService
   base_uri 'https://www.googleapis.com/youtube/v3'
 
   def initialize
-    @api_key = ENV['YOUTUBE_API_KEY'] || Rails.application.credentials.youtube_api_key
-    raise "YouTube API key가 설정되지 않았습니다" unless @api_key
+    @api_key = ENV['YOUTUBE_API_KEY']
+    raise "YouTube API key가 설정되지 않았습니다. Railway 환경변수에서 YOUTUBE_API_KEY를 확인하세요." unless @api_key
   end
 
   def search_videos(query:, region_code: 'KR', duration: nil, order: 'relevance', 
