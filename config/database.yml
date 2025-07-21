@@ -22,7 +22,7 @@ test:
 # Production configuration with automatic PostgreSQL/SQLite switching
 production:
   <% if ENV['DATABASE_URL'] %>
-  # PostgreSQL configuration (Railway)
+  # PostgreSQL configuration (Railway) - 모든 테이블을 같은 DB에 생성
   primary:
     url: <%= ENV['DATABASE_URL'] %>
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
@@ -30,17 +30,14 @@ production:
     url: <%= ENV['DATABASE_URL'] %>
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
     migrations_paths: db/cache_migrate
-    schema_search_path: "cache"
   queue:
     url: <%= ENV['DATABASE_URL'] %>
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
     migrations_paths: db/queue_migrate
-    schema_search_path: "queue"
   cable:
     url: <%= ENV['DATABASE_URL'] %>
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
     migrations_paths: db/cable_migrate
-    schema_search_path: "cable"
   <% else %>
   # SQLite configuration (fallback)
   primary:
