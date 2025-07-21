@@ -25,16 +25,16 @@ test:
 production:
   primary:
     <<: *default
-    database: /app/storage/production.sqlite3
+    database: /rails/storage/production.sqlite3
   cache:
     <<: *default
-    database: /app/storage/production_cache.sqlite3
+    database: /rails/storage/production_cache.sqlite3
     migrations_paths: db/cache_migrate
   queue:
     <<: *default
-    database: /app/storage/production_queue.sqlite3
+    database: /rails/storage/production_queue.sqlite3
     migrations_paths: db/queue_migrate
   cable:
     <<: *default
-    database: /app/storage/production_cable.sqlite3
+    database: /rails/storage/production_cable.sqlite3
     migrations_paths: db/cable_migrate
