@@ -93,4 +93,8 @@ Rails.application.configure do
   
   # Use environment variable for secret key base (Railway deployment)
   config.secret_key_base = ENV['SECRET_KEY_BASE']
+  
+  # SSL configuration for production (Railway automatically provides HTTPS)
+  # Uncomment the line below if you need to disable SSL for local testing
+  # config.force_ssl = false if ENV['DISABLE_SSL'] == 'true'
 end

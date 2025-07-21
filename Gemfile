@@ -75,4 +75,4 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 end
-gem "cssbundling-rails"
+# gem "cssbundling-rails"  # Disabled: Using Bootstrap CDN instead

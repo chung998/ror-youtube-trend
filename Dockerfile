@@ -35,7 +35,8 @@ RUN apt-get update -qq && \
 
 # Install application gems
 COPY Gemfile Gemfile.lock ./
-RUN bundle install && \
+RUN bundle config set frozen false && \
+    bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile --gemfile
 
@@ -48,9 +49,8 @@ RUN chmod +x bin/*
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-# Rails 8 with Propshaft still requires asset precompilation
-RUN RAILS_ENV=production SECRET_KEY_BASE_DUMMY=1 bundle exec rails assets:precompile
+# Precompile assets for production
+RUN RAILS_ENV=production SECRET_KEY_BASE=dummy_key_for_asset_precompile bundle exec rails assets:precompile
 
 
 
@@ -80,4 +80,4 @@ ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
 # Start server with Railway compatible port binding
 EXPOSE 3000
-CMD ./bin/rails server -b 0.0.0.0 -p ${PORT:-3000}
+CMD ["sh", "-c", "./bin/rails server -b 0.0.0.0 -p ${PORT:-3000}"]
