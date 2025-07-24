@@ -10,9 +10,9 @@ class TrendingCollectionService
     region_code = region_code.upcase
     return { success: false, error: "지원하지 않는 국가입니다" } unless SUPPORTED_REGIONS.include?(region_code)
     
-    # 해당 국가의 기존 데이터 삭제 후 새로 수집
-    deleted_count = TrendingVideo.where(region_code: region_code, collection_date: date).delete_all
-    Rails.logger.info "#{region_code} 지역 기존 데이터 #{deleted_count}개 삭제"
+    # 해당 국가의 기존 데이터 삭제 후 새로 수집 (모든 날짜 데이터 삭제)
+    deleted_count = TrendingVideo.where(region_code: region_code).delete_all
+    Rails.logger.info "#{region_code} 지역 기존 데이터 #{deleted_count}개 삭제 (모든 날짜)"
     
     begin
       collection_log = create_collection_log(region_code, date)
@@ -84,9 +84,9 @@ class TrendingCollectionService
   
   # 모든 국가 데이터 수집
   def collect_all_countries(date = Date.current)
-    # 전체 트렌딩 데이터 삭제 후 새로 수집
-    deleted_count = TrendingVideo.where(collection_date: date).delete_all
-    Rails.logger.info "전체 트렌딩 데이터 #{deleted_count}개 삭제"
+    # 전체 트렌딩 데이터 삭제 후 새로 수집 (모든 날짜 데이터 삭제)
+    deleted_count = TrendingVideo.delete_all
+    Rails.logger.info "전체 트렌딩 데이터 #{deleted_count}개 삭제 (모든 날짜)"
     
     results = []
     total_success = 0
