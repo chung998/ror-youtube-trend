@@ -4,11 +4,12 @@ class TrendingController < ApplicationController
   
   def index
     @videos = TrendingVideo.cached_trending(@region, @type)
+    @mega_hits = TrendingVideo.get_mega_hits(12)
     @collection_status = TrendingCollectionService.new.collection_status
     
     respond_to do |format|
       format.html
-      format.json { render json: { videos: @videos, meta: build_meta } }
+      format.json { render json: { videos: @videos, mega_hits: @mega_hits, meta: build_meta } }
     end
   end
   

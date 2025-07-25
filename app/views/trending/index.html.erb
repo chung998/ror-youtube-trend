@@ -23,9 +23,97 @@
     </div>
   </div>
 
+  <!-- 메가히트 섹션 (조회수 1천만 이상) -->
+  <% if @mega_hits.present? %>
+    <div class="row mb-5">
+      <div class="col-12">
+        <div class="card border-warning">
+          <div class="card-header bg-warning bg-opacity-10">
+            <h3 class="card-title mb-0">
+              <i class="fas fa-fire text-warning"></i>
+              <span class="text-warning fw-bold">메가히트</span>
+              <small class="text-muted ms-2">(조회수 1천만 이상)</small>
+            </h3>
+          </div>
+          <div class="card-body p-3">
+            <div class="row g-3">
+              <% @mega_hits.each do |video| %>
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6">
+                  <div class="card h-100 shadow-sm border-0 mega-hit-card">
+                    <!-- 썸네일 -->
+                    <div class="position-relative">
+                      <button type="button" 
+                              class="btn p-0 w-100 youtube-modal-btn"
+                              data-bs-toggle="modal" 
+                              data-bs-target="#youtubeModal"
+                              data-video-id="<%= video.video_id %>"
+                              data-video-title="<%= video.title %>">
+                        <img src="<%= video.thumbnail_url %>" 
+                             class="card-img-top rounded" 
+                             alt="<%= video.title %>"
+                             style="height: 120px; object-fit: cover;">
+                      </button>
+                      
+                      <!-- 지속시간 배지 -->
+                      <% if video.duration.present? %>
+                        <span class="position-absolute bottom-0 end-0 me-2 mb-2">
+                          <small class="badge bg-dark bg-opacity-75">
+                            <%= format_korean_duration(video.duration) %>
+                          </small>
+                        </span>
+                      <% end %>
+                      
+                      <!-- 지역 배지 -->
+                      <span class="position-absolute top-0 start-0 ms-2 mt-2">
+                        <small class="badge bg-primary">
+                          <%= case video.region_code
+                              when 'KR' then '한국'
+                              when 'US' then '미국'
+                              when 'JP' then '일본'
+                              when 'GB' then '영국'
+                              when 'DE' then '독일'
+                              when 'FR' then '프랑스'
+                              when 'VN' then '베트남'
+                              when 'ID' then '인도네시아'
+                              else video.region_code
+                              end %>
+                        </small>
+                      </span>
+                    </div>
+                    
+                    <div class="card-body p-2">
+                      <!-- 제목 -->
+                      <h6 class="card-title small mb-1" title="<%= video.title %>">
+                        <%= truncate(video.title, length: 25) %>
+                      </h6>
+                      
+                      <!-- 채널명 -->
+                      <p class="text-muted small mb-1" title="<%= video.channel_title %>">
+                        <i class="fas fa-user-circle"></i>
+                        <%= truncate(video.channel_title, length: 15) %>
+                      </p>
+                      
+                      <!-- 조회수 -->
+                      <div class="text-center">
+                        <span class="badge bg-danger">
+                          <i class="fas fa-eye"></i>
+                          <%= video.formatted_view_count %>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
   <!-- 필터 섹션 -->
   <div class="row mb-4">
-    <div class="col-md-4">
+    <div class="col-md-8">
       <%= form_with url: trending_path, method: :get, local: true, class: "mb-2" do |f| %>
         <label class="form-label">지역 선택</label>
         <%= f.select :region, 
@@ -45,9 +133,10 @@
       <% end %>
     </div>
     
-    <div class="col-md-4">
+    <%# 쇼츠/일반영상 필터 임시 비활성화 (2025.01.21) %>
+    <%# <div class="col-md-4">
       <%= form_with url: trending_path, method: :get, local: true, class: "mb-2" do |f| %>
-        <label class="form-label">타입 선택</label>
+        <%# <label class="form-label">타입 선택</label>
         <%= f.select :type,
                      options_for_select([
                        ['전체', 'all'],
@@ -56,9 +145,9 @@
                      ], @type),
                      {},
                      { class: "form-select", onchange: "this.form.submit();" } %>
-        <%= f.hidden_field :region, value: @region %>
-      <% end %>
-    </div>
+        <%# <%= f.hidden_field :region, value: @region %>
+      <%# <% end %>
+    <%# </div> %>
     
     <div class="col-md-4 d-flex align-items-end">
       <%= link_to search_path, class: "btn btn-outline-primary" do %>
@@ -97,7 +186,7 @@
               <% if video.duration %>
                 <span class="position-absolute bottom-0 end-0 m-2">
                   <small class="badge bg-dark bg-opacity-75">
-                    <%= video.duration.gsub(/PT|H|M|S/, '').gsub(/(\d+)/, '\1:') %>
+                    <%= format_korean_duration(video.duration) %>
                   </small>
                 </span>
               <% end %>
@@ -106,7 +195,7 @@
             <div class="card-body d-flex flex-column">
               <!-- 제목 -->
               <h6 class="card-title" title="<%= video.title %>">
-                <%= truncate(video.title, length: 80) %>
+                <%= truncate(video.title, length: 30) %>
               </h6>
               
               <!-- 채널명 -->
@@ -119,25 +208,22 @@
               <div class="row text-center small text-muted mb-3">
                 <div class="col-4">
                   <i class="fas fa-eye text-primary"></i><br>
-                  <strong><%= video.formatted_view_count %></strong><br>
-                  <small>조회수</small>
+                  <strong><%= video.formatted_view_count %></strong>
                 </div>
                 <div class="col-4">
                   <i class="fas fa-thumbs-up text-success"></i><br>
-                  <strong><%= number_with_delimiter(video.like_count) %></strong><br>
-                  <small>좋아요</small>
+                  <strong><%= number_with_delimiter(video.like_count) %></strong>
                 </div>
                 <div class="col-4">
                   <i class="fas fa-comment text-info"></i><br>
-                  <strong><%= number_with_delimiter(video.comment_count) %></strong><br>
-                  <small>댓글</small>
+                  <strong><%= number_with_delimiter(video.comment_count) %></strong>
                 </div>
               </div>
               
               <!-- 업로드 시간 -->
               <div class="text-muted small">
                 <i class="fas fa-calendar"></i>
-                <%= time_ago_in_words(video.published_at) %> 전 업로드
+                <%= korean_time_ago(video.published_at) %>
               </div>
             </div>
           </div>
@@ -156,7 +242,7 @@
           "<%= params[:q] %>"에 대한 검색 결과가 없습니다.
         <% else %>
           <%= @region || 'KR' %> 지역의 
-          <%= @type == 'all' ? '전체' : (@type == 'shorts' ? '쇼츠' : '일반 영상') %> 
+          <%# <%= @type == 'all' ? '전체' : (@type == 'shorts' ? '쇼츠' : '일반 영상') %> 
           트렌드 데이터가 아직 수집되지 않았습니다.
         <% end %>
       </p>
@@ -208,20 +294,14 @@
 
 <% content_for :head do %>
 <style>
-  /* 5열 그리드 레이아웃 (검색 페이지와 동일) */
+  /* 4열 그리드 레이아웃 (여유있는 디스플레이) */
   .videos-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
   }
   
   /* 반응형 그리드 */
-  @media (max-width: 1400px) {
-    .videos-grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
-  }
-  
   @media (max-width: 1200px) {
     .videos-grid {
       grid-template-columns: repeat(3, 1fr);
@@ -314,6 +394,37 @@
     aspect-ratio: 16/9;
     object-fit: cover;
     transition: transform 0.3s ease;
+  }
+
+  /* 메가히트 섹션 스타일 */
+  .mega-hit-card {
+    transition: all 0.3s ease;
+    border: 1px solid #ffc107 !important;
+  }
+  
+  .mega-hit-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(255, 193, 7, 0.3) !important;
+    border-color: #ff9800 !important;
+  }
+  
+  .mega-hit-card .card-img-top {
+    transition: all 0.3s ease;
+  }
+  
+  .mega-hit-card:hover .card-img-top {
+    transform: scale(1.05);
+  }
+  
+  .mega-hit-card .youtube-modal-btn {
+    border-radius: 0.375rem;
+    overflow: hidden;
+  }
+  
+  .mega-hit-card .badge.bg-danger {
+    background: linear-gradient(45deg, #dc3545, #ff6b6b) !important;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
   }
 </style>
 

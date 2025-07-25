@@ -185,34 +185,66 @@ class YoutubeSearchService
     hours * 3600 + minutes * 60 + seconds
   end
 
-  # 조회수 포맷팅 (1000 -> 1K, 1000000 -> 1M)
+  # 조회수 포맷팅 (한글 단위: 억, 만, 천)
   def self.format_view_count(count)
     return '0' unless count && count > 0
     
     case count
     when 0...1_000
       count.to_s
-    when 1_000...1_000_000
-      "#{(count / 1_000.0).round(1)}K"
-    when 1_000_000...1_000_000_000
-      "#{(count / 1_000_000.0).round(1)}M"
+    when 1_000...10_000
+      "#{(count / 1_000.0).round}천"
+    when 10_000...100_000_000
+      "#{(count / 10_000.0).round}만"
     else
-      "#{(count / 1_000_000_000.0).round(1)}B"
+      "#{(count / 100_000_000.0).round}억"
     end
   end
 
-  # 지속시간 포맷팅 (3661초 -> 1:01:01)
+  # 지속시간 포맷팅 (3661초 -> 1시간 1분 1초)
   def self.format_duration(seconds)
-    return '0:00' unless seconds && seconds > 0
+    return '0초' unless seconds && seconds > 0
     
     hours = seconds / 3600
     minutes = (seconds % 3600) / 60
     secs = seconds % 60
     
-    if hours > 0
-      "%d:%02d:%02d" % [hours, minutes, secs]
+    result = []
+    result << "#{hours}시간" if hours > 0
+    result << "#{minutes}분" if minutes > 0
+    result << "#{secs}초" if secs > 0
+    
+    result.empty? ? '0초' : result.join(' ')
+  end
+
+  # 한글 날짜 포맷팅 (예: 3일 전, 2주 전, 1개월 전)
+  def self.korean_time_ago(datetime)
+    return '' unless datetime
+    
+    now = Time.current
+    diff_seconds = (now - datetime).to_i
+    
+    case diff_seconds
+    when 0...60
+      "방금 전"
+    when 60...3600
+      minutes = diff_seconds / 60
+      "#{minutes}분 전"
+    when 3600...86400
+      hours = diff_seconds / 3600
+      "#{hours}시간 전"
+    when 86400...604800
+      days = diff_seconds / 86400
+      "#{days}일 전"
+    when 604800...2629746
+      weeks = diff_seconds / 604800
+      "#{weeks}주 전"
+    when 2629746...31556952
+      months = diff_seconds / 2629746
+      "#{months}개월 전"
     else
-      "%d:%02d" % [minutes, secs]
+      years = diff_seconds / 31556952
+      "#{years}년 전"
     end
   end
 

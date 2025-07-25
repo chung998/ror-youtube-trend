@@ -17,23 +17,24 @@ class TrendingVideo < ApplicationRecord
   scope :videos, -> { where(is_shorts: false) }
   scope :popular, -> { order(view_count: :desc) }
   scope :recent_days, ->(days = 7) { where('collection_date >= ?', days.days.ago) }
+  scope :mega_hits, -> { where('view_count >= ?', 10_000_000) }
   
   # YouTube URL 생성
   def youtube_url
     "https://www.youtube.com/watch?v=#{video_id}"
   end
   
-  # 조회수 포맷팅
+  # 조회수 포맷팅 (한글 단위: 억, 만, 천)
   def formatted_view_count
     case view_count
     when 0...1_000
       view_count.to_s
-    when 1_000...1_000_000
-      "#{(view_count / 1_000.0).round(1)}K"
-    when 1_000_000...1_000_000_000
-      "#{(view_count / 1_000_000.0).round(1)}M"
+    when 1_000...10_000
+      "#{(view_count / 1_000.0).round}천"
+    when 10_000...100_000_000
+      "#{(view_count / 10_000.0).round}만"
     else
-      "#{(view_count / 1_000_000_000.0).round(1)}B"
+      "#{(view_count / 100_000_000.0).round}억"
     end
   end
   
@@ -63,5 +64,19 @@ class TrendingVideo < ApplicationRecord
         count: by_region(region).today.count
       }
     end
+  end
+
+  # 메가히트 영상 조회 (조회수 1천만 이상, 지역 무관, video_id 기준 중복 제거)
+  def self.get_mega_hits(limit = 12)
+    # video_id별로 region_code 순서상 첫 번째 레코드만 선택하여 중복 제거
+    # SQLite와 PostgreSQL 모두 호환되는 방식 사용
+    subquery = mega_hits
+      .select('video_id, MIN(region_code) as first_region')
+      .group(:video_id)
+    
+    mega_hits
+      .joins("INNER JOIN (#{subquery.to_sql}) AS unique_videos ON trending_videos.video_id = unique_videos.video_id AND trending_videos.region_code = unique_videos.first_region")
+      .order(view_count: :desc)
+      .limit(limit)
   end
 end
