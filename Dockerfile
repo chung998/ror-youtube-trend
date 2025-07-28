@@ -81,6 +81,6 @@ RUN mkdir -p /rails/storage /rails/db /rails/log /rails/tmp && \
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
-# Start server with Railway compatible port binding
+# Start both Solid Queue worker and Rails server
 EXPOSE 3000
-CMD ["sh", "-c", "./bin/rails server -b 0.0.0.0 -p ${PORT:-3000}"]
+CMD ["sh", "-c", "./bin/rails solid_queue:start & ./bin/rails server -b 0.0.0.0 -p ${PORT:-3000}"]
