@@ -3,14 +3,14 @@ development:
   collect_all_countries:
     class: CollectAllCountriesJob
     queue: default
-    schedule: "0 0 * * * Asia/Seoul"  # 서울 시간 매일 00:00
+    schedule: "every day at 12:00am"  # 매일 자정 (KST 시간대는 서버 설정에 따름)
     
 production:
   collect_all_countries:
     class: CollectAllCountriesJob  
     queue: default
-    schedule: "0 0 * * * Asia/Seoul"  # 서울 시간 매일 00:00
+    schedule: "every day at 12:00am"  # 매일 자정 (KST 시간대는 서버 설정에 따름)
     
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
-    schedule: every hour at minute 12
+    schedule: "every hour at minute 12"
