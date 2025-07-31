@@ -1,5 +1,5 @@
 class TrendingCollectionService
-  SUPPORTED_REGIONS = %w[KR US JP GB DE FR VN ID].freeze
+  include YoutubeRegions
   
   def initialize
     @youtube_service = YoutubeDataService.new
@@ -8,7 +8,7 @@ class TrendingCollectionService
   # 특정 국가의 인기 영상 수집 (trending API만 사용)
   def collect_country(region_code, date = Date.current)
     region_code = region_code.upcase
-    return { success: false, error: "지원하지 않는 국가입니다" } unless SUPPORTED_REGIONS.include?(region_code)
+    return { success: false, error: "지원하지 않는 국가입니다" } unless YoutubeRegions.valid_primary?(region_code)
     
     # 해당 국가의 기존 데이터 삭제 후 새로 수집 (모든 날짜 데이터 삭제)
     deleted_count = TrendingVideo.where(region_code: region_code).delete_all
@@ -92,7 +92,7 @@ class TrendingCollectionService
     total_success = 0
     total_videos = 0
     
-    SUPPORTED_REGIONS.each do |region|
+    YoutubeRegions.primary_codes.each do |region|
       result = collect_country_without_delete(region, date)
       results << result
       
@@ -104,11 +104,11 @@ class TrendingCollectionService
     
     {
       success: total_success > 0,
-      total_countries: SUPPORTED_REGIONS.length,
+      total_countries: YoutubeRegions.primary_codes.length,
       successful_countries: total_success,
       total_videos_collected: total_videos,
       results: results,
-      message: "전체 수집 완료: #{total_success}/#{SUPPORTED_REGIONS.length} 국가 성공"
+      message: "전체 수집 완료: #{total_success}/#{YoutubeRegions.primary_codes.length} 국가 성공"
     }
   end
   
@@ -122,7 +122,7 @@ class TrendingCollectionService
   # 데이터 삭제 없이 수집 (전체 수집에서 사용)
   def collect_country_without_delete(region_code, date = Date.current)
     region_code = region_code.upcase
-    return { success: false, error: "지원하지 않는 국가입니다" } unless SUPPORTED_REGIONS.include?(region_code)
+    return { success: false, error: "지원하지 않는 국가입니다" } unless YoutubeRegions.valid_primary?(region_code)
     
     begin
       collection_log = create_collection_log(region_code, date)

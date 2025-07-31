@@ -2,6 +2,8 @@ require 'google/apis/youtube_v3'
 require 'googleauth'
 
 class YoutubeDataService
+  include YoutubeRegions
+  
   YOUTUBE_API_KEY = ENV['YOUTUBE_API_KEY']
   
   def initialize
@@ -91,16 +93,7 @@ class YoutubeDataService
   
   # 지역 코드에 따른 언어 설정
   def get_language_for_region(region_code)
-    case region_code.upcase
-    when 'KR' then 'ko'
-    when 'JP' then 'ja'
-    when 'US', 'GB' then 'en'
-    when 'DE' then 'de'
-    when 'FR' then 'fr'
-    when 'VN' then 'vi'
-    when 'ID' then 'id'
-    else 'en'
-    end
+    YoutubeRegions.language(region_code)
   end
   
   # 쇼츠 관련 메서드 제거 (더 이상 사용하지 않음)

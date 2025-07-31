@@ -1,4 +1,5 @@
 class Admin::AdminController < ApplicationController
+  include YoutubeRegions
   before_action :require_admin # 실제 운영에서는 인증 구현
   
   # 관리자 페이지에서 제외할 시스템 테이블들
@@ -135,7 +136,7 @@ class Admin::AdminController < ApplicationController
   # 전체 국가 수집 기능 (동기 방식)
   def collect_all
     # 등록된 모든 국가 코드
-    all_regions = %w[KR US JP GB DE FR VN ID]
+    all_regions = YoutubeRegions.primary_codes
     
     respond_to do |format|
       begin
@@ -244,7 +245,7 @@ class Admin::AdminController < ApplicationController
   end
 
   def valid_region?(region_code)
-    %w[KR US JP GB DE FR IN BR MX CA AU VN ID].include?(region_code)
+    YoutubeRegions.valid?(region_code)
   end
 
 

@@ -1,4 +1,6 @@
 class TrendingController < ApplicationController
+  include YoutubeRegions
+  
   before_action :set_region_and_type, only: [:index, :collect_country]
   before_action :set_region, only: [:collect_country]
   
@@ -70,13 +72,8 @@ class TrendingController < ApplicationController
   private
   
   def set_region_and_type
-    @region = params[:region]&.upcase || 'KR'
+    @region = YoutubeRegions.normalize_primary(params[:region])
     @type = params[:type] || 'all'
-    
-    # 유효하지 않은 지역 코드 처리
-    unless %w[KR US JP GB DE FR VN ID].include?(@region)
-      @region = 'KR'
-    end
     
     # 유효하지 않은 타입 처리
     unless %w[all videos shorts].include?(@type)
@@ -85,12 +82,7 @@ class TrendingController < ApplicationController
   end
   
   def set_region
-    @region = params[:region]&.upcase || 'KR'
-    
-    # 유효하지 않은 지역 코드 처리
-    unless %w[KR US JP GB DE FR VN ID].include?(@region)
-      @region = 'KR'
-    end
+    @region = YoutubeRegions.normalize_primary(params[:region])
   end
   
   def get_last_updated_time

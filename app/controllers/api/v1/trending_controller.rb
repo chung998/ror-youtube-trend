@@ -1,4 +1,5 @@
 class Api::V1::TrendingController < ApplicationController
+  include YoutubeRegions
   before_action :set_region_and_type, only: [:index, :collect]
   
   def index
@@ -56,13 +57,8 @@ class Api::V1::TrendingController < ApplicationController
   private
   
   def set_region_and_type
-    @region = params[:region]&.upcase || 'KR'
+    @region = YoutubeRegions.normalize_primary(params[:region])
     @type = params[:type] || 'all'
-    
-    # 유효하지 않은 지역 코드 처리 (베트남, 인도네시아 추가)
-    unless %w[KR US JP GB DE FR VN ID].include?(@region)
-      @region = 'KR'
-    end
     
     # 유효하지 않은 타입 처리
     unless %w[all videos shorts].include?(@type)

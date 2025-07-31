@@ -1,8 +1,8 @@
 class TrendingVideo < ApplicationRecord
-  # 사용자별 분리 제거 - 단일 테이블로 관리
+  include YoutubeRegions
   
   validates :video_id, presence: true, uniqueness: { scope: [:region_code, :collection_date] }
-  validates :region_code, inclusion: { in: %w[KR US JP GB DE FR VN ID] }
+  validates :region_code, inclusion: { in: YoutubeRegions.primary_codes }
   validates :title, presence: true
   validates :channel_title, presence: true
   validates :channel_id, presence: true
@@ -57,11 +57,11 @@ class TrendingVideo < ApplicationRecord
   
   # 모든 국가의 오늘 수집 상태
   def self.collection_status_today
-    %w[KR US JP GB DE FR].map do |region|
+    YoutubeRegions.stats_regions.map do |region_code, region_name|
       {
-        region: region,
-        collected: collected_today?(region),
-        count: by_region(region).today.count
+        region: region_code,
+        collected: collected_today?(region_code),
+        count: by_region(region_code).today.count
       }
     end
   end
@@ -74,9 +74,22 @@ class TrendingVideo < ApplicationRecord
       .select('video_id, MIN(region_code) as first_region')
       .group(:video_id)
     
-    mega_hits
+    videos = mega_hits
       .joins("INNER JOIN (#{subquery.to_sql}) AS unique_videos ON trending_videos.video_id = unique_videos.video_id AND trending_videos.region_code = unique_videos.first_region")
       .order(view_count: :desc)
       .limit(limit)
+    
+    # 각 비디오에 대해 모든 region_code들을 추가로 수집
+    videos.map do |video|
+      region_codes = mega_hits
+        .where(video_id: video.video_id)
+        .distinct
+        .pluck(:region_code)
+        .sort
+      
+      # region_codes 속성을 동적으로 추가
+      video.define_singleton_method(:region_codes) { region_codes }
+      video
+    end
   end
 end

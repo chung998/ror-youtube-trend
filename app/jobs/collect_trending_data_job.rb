@@ -1,7 +1,8 @@
 class CollectTrendingDataJob < ApplicationJob
+  include YoutubeRegions
   queue_as :default
   
-  def perform(region_code = 'KR', collection_type = 'all')
+  def perform(region_code = YoutubeRegions::DEFAULT_REGION, collection_type = 'all')
     Rails.logger.info "🚀 #{region_code} 지역 #{collection_type} 데이터 수집 시작"
     
     # 수집 로그 시작

@@ -1,4 +1,4 @@
-<% content_for :title, "YouTube 트렌드 - #{@region || 'KR'}" %>
+<% content_for :title, "YouTube 트렌드 - #{YoutubeRegions.name(@region || YoutubeRegions::DEFAULT_REGION)}" %>
 
 <div class="container">
   <!-- 헤더 섹션 -->
@@ -8,7 +8,7 @@
         <h1 class="display-6">
           <i class="fab fa-youtube text-danger"></i>
           YouTube 트렌드
-          <span class="badge bg-primary"><%= @region || 'KR' %></span>
+          <span class="badge bg-primary"><%= YoutubeRegions.display_name(@region || YoutubeRegions::DEFAULT_REGION) %></span>
         </h1>
         
         <div class="text-muted small text-end">
@@ -63,22 +63,20 @@
                         </span>
                       <% end %>
                       
-                      <!-- 지역 배지 -->
-                      <span class="position-absolute top-0 start-0 ms-2 mt-2">
-                        <small class="badge bg-primary">
-                          <%= case video.region_code
-                              when 'KR' then '한국'
-                              when 'US' then '미국'
-                              when 'JP' then '일본'
-                              when 'GB' then '영국'
-                              when 'DE' then '독일'
-                              when 'FR' then '프랑스'
-                              when 'VN' then '베트남'
-                              when 'ID' then '인도네시아'
-                              else video.region_code
-                              end %>
-                        </small>
-                      </span>
+                      <!-- 지역 배지들 -->
+                      <div class="position-absolute top-0 start-0 ms-2 mt-2 d-flex flex-wrap gap-1">
+                        <% if video.respond_to?(:region_codes) && video.region_codes.present? %>
+                          <% video.region_codes.each do |region_code| %>
+                            <small class="badge bg-primary">
+                              <%= region_code_to_korean(region_code) %>
+                            </small>
+                          <% end %>
+                        <% else %>
+                          <small class="badge bg-primary">
+                            <%= region_code_to_korean(video.region_code) %>
+                          </small>
+                        <% end %>
+                      </div>
                     </div>
                     
                     <div class="card-body p-2">
@@ -117,16 +115,7 @@
       <%= form_with url: trending_path, method: :get, local: true, class: "mb-2" do |f| %>
         <label class="form-label">지역 선택</label>
         <%= f.select :region, 
-                     options_for_select([
-                       ['🇰🇷 한국', 'KR'],
-                       ['🇺🇸 미국', 'US'], 
-                       ['🇯🇵 일본', 'JP'],
-                       ['🇬🇧 영국', 'GB'],
-                       ['🇩🇪 독일', 'DE'],
-                       ['🇫🇷 프랑스', 'FR'],
-                       ['🇻🇳 베트남', 'VN'],
-                       ['🇮🇩 인도네시아', 'ID']
-                     ], @region),
+                     options_for_select(YoutubeRegions.primary_options, @region),
                      {}, 
                      { class: "form-select", onchange: "this.form.submit();" } %>
         <%= f.hidden_field :type, value: @type %>

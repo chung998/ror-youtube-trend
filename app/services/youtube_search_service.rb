@@ -1,5 +1,6 @@
 class YoutubeSearchService
   include HTTParty
+  include YoutubeRegions
   base_uri 'https://www.googleapis.com/youtube/v3'
 
   def initialize
@@ -7,7 +8,7 @@ class YoutubeSearchService
     raise "YouTube API key가 설정되지 않았습니다. Railway 환경변수에서 YOUTUBE_API_KEY를 확인하세요." unless @api_key
   end
 
-  def search_videos(query:, region_code: 'KR', duration: nil, order: 'viewCount', 
+  def search_videos(query:, region_code: YoutubeRegions::DEFAULT_REGION, duration: nil, order: 'viewCount', 
                    published_after: nil, published_before: nil, page_token: nil, max_results: 25, include_stats: true)
     
     
@@ -305,21 +306,7 @@ class YoutubeSearchService
   end
 
   def self.region_options
-    [
-      ['🇰🇷 한국', 'KR'],
-      ['🇺🇸 미국', 'US'],
-      ['🇯🇵 일본', 'JP'],
-      ['🇻🇳 베트남', 'VN'],
-      ['🇮🇩 인도네시아', 'ID'],
-      ['🇬🇧 영국', 'GB'],
-      ['🇩🇪 독일', 'DE'],
-      ['🇫🇷 프랑스', 'FR'],
-      ['🇮🇳 인도', 'IN'],
-      ['🇧🇷 브라질', 'BR'],
-      ['🇲🇽 멕시코', 'MX'],
-      ['🇨🇦 캐나다', 'CA'],
-      ['🇦🇺 호주', 'AU']
-    ]
+    YoutubeRegions.all_options
   end
 
   # 발행 날짜 프리셋 옵션

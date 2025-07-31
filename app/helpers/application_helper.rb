@@ -1,4 +1,5 @@
 module ApplicationHelper
+  include YoutubeRegions
   # 한글 날짜 포맷팅 (예: 3일 전, 2주 전, 1개월 전)
   def korean_time_ago(datetime)
     return '' unless datetime
@@ -48,5 +49,10 @@ module ApplicationHelper
     result << "#{seconds}초" if seconds > 0
     
     result.empty? ? '0초' : result.join(' ')
+  end
+
+  # 국가 코드를 한글로 변환
+  def region_code_to_korean(region_code)
+    YoutubeRegions.name(region_code)
   end
 end

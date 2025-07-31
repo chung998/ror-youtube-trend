@@ -1,4 +1,5 @@
 class CollectAllCountriesJob < ApplicationJob
+  include YoutubeRegions
   queue_as :default
   
   def perform(date = Date.current)
@@ -37,7 +38,7 @@ class CollectAllCountriesJob < ApplicationJob
   
   def invalidate_all_cache(date)
     # 모든 지역 및 타입의 캐시 무효화
-    regions = %w[KR US JP GB DE FR VN ID]
+    regions = YoutubeRegions.primary_codes
     types = %w[all videos shorts]
     
     regions.each do |region|

@@ -175,23 +175,14 @@
                       </button>
                       <small class="text-muted d-block mt-2 text-center">
                         <i class="fas fa-info-circle me-1"></i>
-                        한국, 미국, 일본, 영국, 독일, 프랑스, 베트남, 인도네시아 (총 8개국)
+                        <%= YoutubeRegions.primary_codes.join(', ') %> (총 <%= YoutubeRegions.primary_codes.length %>개국)
                       </small>
                     </div>
                   </div>
                   
                   <h6 class="text-muted mb-3">개별 국가 수집</h6>
                   <div class="row g-2">
-                    <% [
-                         ['🇰🇷 한국', 'KR', 'primary'],
-                         ['🇺🇸 미국', 'US', 'info'], 
-                         ['🇯🇵 일본', 'JP', 'danger'],
-                         ['🇬🇧 영국', 'GB', 'success'],
-                         ['🇩🇪 독일', 'DE', 'warning'],
-                         ['🇫🇷 프랑스', 'FR', 'secondary'],
-                         ['🇻🇳 베트남', 'VN', 'dark'],
-                         ['🇮🇩 인도네시아', 'ID', 'info']
-                       ].each do |name, code, color| %>
+                    <% YoutubeRegions.admin_buttons.each do |name, code, color| %>
                       <div class="col-lg-3 col-md-4 col-6">
                         <button class="btn btn-outline-<%= color %> btn-sm w-100 py-2 collect-single-btn"
                                 data-region="<%= code %>"
@@ -754,7 +745,7 @@ async function collectSingleCountry(region, name, buttonElement) {
 
 // 전체 국가 수집 함수
 async function collectAllCountries() {
-  if (!confirm('모든 등록된 국가의 트렌드 데이터를 수집하시겠습니까?\n\n총 8개국을 순차적으로 수집하며 약 3-5분 정도 소요됩니다.')) {
+  if (!confirm('모든 등록된 국가의 트렌드 데이터를 수집하시겠습니까?\n\n총 <%= YoutubeRegions.primary_codes.length %>개국을 순차적으로 수집하며 약 5-8분 정도 소요됩니다.')) {
     return;
   }
   
